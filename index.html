@@ -1,291 +1,275 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
+<!DOCTYPE html>
+<html lang="zh-CN">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2487.4">
-  <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
-    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>化纤钛白粉战情地图 (TiO2 Market Intelligence)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
+        body { font-family: 'Noto Sans SC', sans-serif; }
+        #map { height: 100%; width: 100%; background: #f8fafc; }
+        .panel-transition { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .marker-cluster-custom { background: rgba(59, 130, 246, 0.6); border-radius: 50%; border: 2px solid white; }
+    </style>
 </head>
-<body>
-<p class="p1">&lt;!DOCTYPE html&gt;</p>
-<p class="p1">&lt;html lang="zh-CN"&gt;</p>
-<p class="p1">&lt;head&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta charset="UTF-8"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;title&gt;化纤钛白粉战情地图 (TiO2 Market Intelligence)&lt;/title&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;script src="https://cdn.tailwindcss.com"&gt;&lt;/script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" /&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;style&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&amp;display=swap');</p>
-<p class="p1"><span class="Apple-converted-space">        </span>body { font-family: 'Noto Sans SC', sans-serif; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>#map { height: 100%; width: 100%; background: #f8fafc; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.panel-transition { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.marker-cluster-custom { background: rgba(59, 130, 246, 0.6); border-radius: 50%; border: 2px solid white; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/style&gt;</p>
-<p class="p1">&lt;/head&gt;</p>
-<p class="p1">&lt;body class="bg-slate-50 h-screen overflow-hidden flex flex-col md:flex-row"&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;!-- 顶部状态栏 --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="absolute top-4 left-4 z-[1000] flex flex-col gap-2 pointer-events-none"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="bg-white/90 backdrop-blur-md px-4 py-3 rounded-2xl shadow-xl border border-blue-100 flex items-center gap-3 pointer-events-auto"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="relative"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="w-3 h-3 bg-blue-600 rounded-full"&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="absolute inset-0 w-3 h-3 bg-blue-600 rounded-full animate-ping"&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;h1 class="font-bold text-slate-800 text-sm"&gt;钛白粉下游战情监控&lt;/h1&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;p class="text-[10px] text-slate-500 font-medium"&gt;数据最后更新: &lt;span id="last-update"&gt;-&lt;/span&gt;&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;!-- 搜索栏 --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="bg-white/90 backdrop-blur-md p-2 rounded-xl shadow-lg border border-slate-200 flex items-center gap-2 pointer-events-auto"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;input type="text" id="map-search" placeholder="搜索化纤厂、中间商..." class="bg-transparent text-sm outline-none px-2 w-48"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;button class="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"&gt;&lt;path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /&gt;&lt;/svg&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;!-- 地图区域 --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="flex-1 relative order-2 md:order-1"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div id="map"&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div id="stat-overlay" class="absolute bottom-6 left-6 z-[1000] bg-slate-900/80 text-white p-4 rounded-2xl backdrop-blur shadow-2xl hidden md:block border border-white/10"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="grid grid-cols-2 gap-4"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;p class="text-xs text-slate-400"&gt;监控客户总数&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;p class="text-xl font-bold" id="stat-count"&gt;0&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;p class="text-xs text-slate-400"&gt;覆盖总产能&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;p class="text-xl font-bold" id="stat-capacity"&gt;0t&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;!-- 侧边详情面板 --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="side-panel" class="panel-transition fixed md:relative right-0 top-0 h-full w-full md:w-[450px] bg-white shadow-2xl z-[2000] translate-x-full md:translate-x-0 flex flex-col border-l border-slate-200"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;!-- 头部 --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="p-5 border-b flex justify-between items-center bg-slate-50/50"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="flex items-center gap-2"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"&gt;&lt;path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /&gt;&lt;/svg&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;h2 class="font-bold text-slate-800"&gt;企业战情看板&lt;/h2&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="flex gap-1"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;button onclick="toggleEdit()" class="p-2 hover:bg-slate-200 rounded-full text-slate-600"&gt;&lt;svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"&gt;&lt;path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /&gt;&lt;/svg&gt;&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;button onclick="closePanel()" class="p-2 hover:bg-red-50 rounded-full text-slate-400 hover:text-red-500 md:hidden"&gt;&lt;svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"&gt;&lt;path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /&gt;&lt;/svg&gt;&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;!-- 内容区 --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div id="panel-content" class="flex-1 overflow-y-auto p-6 space-y-6"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="flex flex-col items-center justify-center h-full text-slate-400 space-y-2"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"&gt;&lt;path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /&gt;&lt;/svg&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;p&gt;点击地图标记查看客户详情&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;!-- 操作栏 --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div id="panel-footer" class="p-4 bg-slate-50 border-t hidden flex gap-2"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;button onclick="saveData()" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"&gt;更新战情信息&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"&gt;&lt;/script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>// 初始化变量</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let map;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let markers = {};</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let currentId = null;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let isEditing = false;</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// 初始示例数据 (行业重点：化纤级钛白粉应用)</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let customers = [</p>
-<p class="p1"><span class="Apple-converted-space">            </span>{<span class="Apple-converted-space"> </span></p>
-<p class="p1"><span class="Apple-converted-space">                </span>id: 1,<span class="Apple-converted-space"> </span></p>
-<p class="p1"><span class="Apple-converted-space">                </span>name: "浙江金彩新材料有限公司",<span class="Apple-converted-space"> </span></p>
-<p class="p1"><span class="Apple-converted-space">                </span>lat: 30.25, lng: 120.15,<span class="Apple-converted-space"> </span></p>
-<p class="p1"><span class="Apple-converted-space">                </span>type: "重点中间商",</p>
-<p class="p1"><span class="Apple-converted-space">                </span>capacity: 12000, // 吨/年</p>
-<p class="p1"><span class="Apple-converted-space">                </span>product: "化纤级水冲/半消光钛白粉",</p>
-<p class="p1"><span class="Apple-converted-space">                </span>contacts: "张经理 (138****8888)",</p>
-<p class="p1"><span class="Apple-converted-space">                </span>upstream: "龙佰集团, 中核钛白",</p>
-<p class="p1"><span class="Apple-converted-space">                </span>downstream: "恒逸石化, 荣盛石化",</p>
-<p class="p1"><span class="Apple-converted-space">                </span>status: "合作中",</p>
-<p class="p1"><span class="Apple-converted-space">                </span>notes: "侧重于高端母粒研发，对白度要求极高。"</p>
-<p class="p1"><span class="Apple-converted-space">            </span>},</p>
-<p class="p1"><span class="Apple-converted-space">            </span>{<span class="Apple-converted-space"> </span></p>
-<p class="p1"><span class="Apple-converted-space">                </span>id: 2,<span class="Apple-converted-space"> </span></p>
-<p class="p1"><span class="Apple-converted-space">                </span>name: "恒逸石化股份有限公司",<span class="Apple-converted-space"> </span></p>
-<p class="p1"><span class="Apple-converted-space">                </span>lat: 30.18, lng: 120.25,<span class="Apple-converted-space"> </span></p>
-<p class="p1"><span class="Apple-converted-space">                </span>type: "终端化纤厂",</p>
-<p class="p1"><span class="Apple-converted-space">                </span>capacity: 850000, // 聚酯产能</p>
-<p class="p1"><span class="Apple-converted-space">                </span>product: "涤纶长丝, 切片",</p>
-<p class="p1"><span class="Apple-converted-space">                </span>contacts: "采购部-李总",</p>
-<p class="p1"><span class="Apple-converted-space">                </span>upstream: "浙江金彩, 宜宾天原",</p>
-<p class="p1"><span class="Apple-converted-space">                </span>downstream: "下游织造企业",</p>
-<p class="p1"><span class="Apple-converted-space">                </span>status: "潜在客户",</p>
-<p class="p1"><span class="Apple-converted-space">                </span>notes: "目前主要使用进口R-104，有国产化替代需求。"</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>];</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function initApp() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>// 初始化地图</p>
-<p class="p1"><span class="Apple-converted-space">            </span>map = L.map('map', { zoomControl: false }).setView([30.2, 120.2], 9);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>attribution: '钛白粉行业地图 v1.0'</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}).addTo(map);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>L.control.zoom({ position: 'bottomright' }).addTo(map);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// 更新仪表盘</p>
-<p class="p1"><span class="Apple-converted-space">            </span>updateDashboard();</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// 渲染标记</p>
-<p class="p1"><span class="Apple-converted-space">            </span>customers.forEach(addMarker);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// 点击地图新增</p>
-<p class="p1"><span class="Apple-converted-space">            </span>map.on('click', (e) =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if(isEditing) return;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>const newId = Date.now();</p>
-<p class="p1"><span class="Apple-converted-space">                </span>const newCust = {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>id: newId, name: "新增潜在客户", lat: e.latlng.lat, lng: e.latlng.lng,</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>type: "待核实", capacity: 0, product: "化纤钛白粉", contacts: "",</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>upstream: "", downstream: "", status: "初次接触", notes: ""</p>
-<p class="p1"><span class="Apple-converted-space">                </span>};</p>
-<p class="p1"><span class="Apple-converted-space">                </span>customers.push(newCust);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>addMarker(newCust);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>showDetail(newId, true);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>});</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('last-update').innerText = new Date().toLocaleString();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function addMarker(cust) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const color = cust.type === "重点中间商" ? "#3b82f6" : "#10b981";</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const icon = L.divIcon({</p>
-<p class="p1"><span class="Apple-converted-space">                </span>html: `&lt;div style="background:${color}" class="w-4 h-4 rounded-full border-2 border-white shadow-lg animate-pulse"&gt;&lt;/div&gt;`,</p>
-<p class="p1"><span class="Apple-converted-space">                </span>className: ''</p>
-<p class="p1"><span class="Apple-converted-space">            </span>});</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const marker = L.marker([cust.lat, cust.lng], { icon }).addTo(map);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>marker.on('click', () =&gt; showDetail(cust.id));</p>
-<p class="p1"><span class="Apple-converted-space">            </span>markers[cust.id] = marker;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function showDetail(id, startEdit = false) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>currentId = id;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>isEditing = startEdit;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const cust = customers.find(c =&gt; c.id === id);</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('side-panel').classList.remove('translate-x-full');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>renderContent(cust);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function closePanel() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('side-panel').classList.add('translate-x-full');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>isEditing = false;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function toggleEdit() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>isEditing = !isEditing;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>renderContent(customers.find(c =&gt; c.id === currentId));</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function renderContent(cust) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const container = document.getElementById('panel-content');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const footer = document.getElementById('panel-footer');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>footer.style.display = isEditing ? 'flex' : 'none';</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>let html = `</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="space-y-4"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>&lt;label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"&gt;企业全称&lt;/label&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>${isEditing ?<span class="Apple-converted-space"> </span></p>
-<p class="p1"><span class="Apple-converted-space">                            </span>`&lt;input id="in-name" class="w-full p-3 border-2 border-blue-50 rounded-xl outline-none focus:border-blue-500" value="${cust.name}"&gt;` :<span class="Apple-converted-space"> </span></p>
-<p class="p1"><span class="Apple-converted-space">                            </span>`&lt;h3 class="text-xl font-bold text-slate-800"&gt;${cust.name}&lt;/h3&gt;`</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;div class="grid grid-cols-2 gap-3"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>&lt;div class="bg-blue-50 p-3 rounded-xl"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>&lt;p class="text-[10px] text-blue-500 font-bold uppercase"&gt;业务类型&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>${isEditing ? `&lt;input id="in-type" class="w-full bg-white text-sm" value="${cust.type}"&gt;` : `&lt;p class="font-bold text-blue-900"&gt;${cust.type}&lt;/p&gt;`}</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>&lt;div class="bg-emerald-50 p-3 rounded-xl"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>&lt;p class="text-[10px] text-emerald-500 font-bold uppercase"&gt;年度产值/用量&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>${isEditing ? `&lt;input id="in-cap" class="w-full bg-white text-sm" value="${cust.capacity}"&gt;` : `&lt;p class="font-bold text-emerald-900"&gt;${cust.capacity} t&lt;/p&gt;`}</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;div class="space-y-4 pt-4 border-t border-slate-100"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>${renderField("核心联系人", cust.contacts, "in-contacts", "svg-user")}</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>${renderField("主要产品/规格", cust.product, "in-product", "svg-box")}</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>${renderField("上游供应商 (竞争对手)", cust.upstream, "in-up", "svg-truck")}</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>${renderField("下游主要客户 (浙江金彩等)", cust.downstream, "in-down", "svg-link")}</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>&lt;div class="p-3 bg-slate-50 rounded-xl border border-slate-100"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>&lt;p class="text-xs font-bold text-slate-400 mb-1"&gt;战情备忘录&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>${isEditing ?<span class="Apple-converted-space"> </span></p>
-<p class="p1"><span class="Apple-converted-space">                                </span>`&lt;textarea id="in-notes" class="w-full h-24 bg-white text-sm p-2 rounded"&gt;${cust.notes}&lt;/textarea&gt;` :<span class="Apple-converted-space"> </span></p>
-<p class="p1"><span class="Apple-converted-space">                                </span>`&lt;p class="text-sm text-slate-600 italic"&gt;"${cust.notes || '暂无情报记录'}"&lt;/p&gt;`</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>`;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>container.innerHTML = html;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function renderField(label, value, id, iconType) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>return `</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="flex gap-3"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;div class="w-5 h-5 mt-1 text-slate-300"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>&lt;svg fill="currentColor" viewBox="0 0 20 20"&gt;&lt;circle cx="10" cy="10" r="10"/&gt;&lt;/svg&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;div class="flex-1"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>&lt;p class="text-[10px] font-bold text-slate-400 uppercase"&gt;${label}&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>${isEditing ? `&lt;input id="${id}" class="w-full border-b text-sm py-1 outline-none focus:border-blue-500" value="${value}"&gt;` : `&lt;p class="text-sm text-slate-700"&gt;${value || '-'}&lt;/p&gt;`}</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>`;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function saveData() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const idx = customers.findIndex(c =&gt; c.id === currentId);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if(idx &gt; -1) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>customers[idx] = {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>...customers[idx],</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>name: document.getElementById('in-name').value,</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>type: document.getElementById('in-type').value,</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>capacity: document.getElementById('in-cap').value,</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>contacts: document.getElementById('in-contacts').value,</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>product: document.getElementById('in-product').value,</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>upstream: document.getElementById('in-up').value,</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>downstream: document.getElementById('in-down').value,</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>notes: document.getElementById('in-notes').value</p>
-<p class="p1"><span class="Apple-converted-space">                </span>};</p>
-<p class="p1"><span class="Apple-converted-space">                </span>isEditing = false;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>updateDashboard();</p>
-<p class="p1"><span class="Apple-converted-space">                </span>renderContent(customers[idx]);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function updateDashboard() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('stat-count').innerText = customers.length;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const total = customers.reduce((sum, c) =&gt; sum + (parseInt(c.capacity) || 0), 0);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('stat-capacity').innerText = total.toLocaleString() + 't';</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>window.onload = initApp;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/script&gt;</p>
-<p class="p1">&lt;/body&gt;</p>
-<p class="p1">&lt;/html&gt;</p>
+<body class="bg-slate-50 h-screen overflow-hidden flex flex-col md:flex-row">
+
+    <!-- 顶部状态栏 -->
+    <div class="absolute top-4 left-4 z-[1000] flex flex-col gap-2 pointer-events-none">
+        <div class="bg-white/90 backdrop-blur-md px-4 py-3 rounded-2xl shadow-xl border border-blue-100 flex items-center gap-3 pointer-events-auto">
+            <div class="relative">
+                <div class="w-3 h-3 bg-blue-600 rounded-full"></div>
+                <div class="absolute inset-0 w-3 h-3 bg-blue-600 rounded-full animate-ping"></div>
+            </div>
+            <div>
+                <h1 class="font-bold text-slate-800 text-sm">钛白粉下游战情监控</h1>
+                <p class="text-[10px] text-slate-500 font-medium">数据最后更新: <span id="last-update">-</span></p>
+            </div>
+        </div>
+        
+        <!-- 搜索栏 -->
+        <div class="bg-white/90 backdrop-blur-md p-2 rounded-xl shadow-lg border border-slate-200 flex items-center gap-2 pointer-events-auto">
+            <input type="text" id="map-search" placeholder="搜索化纤厂、中间商..." class="bg-transparent text-sm outline-none px-2 w-48">
+            <button class="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- 地图区域 -->
+    <div class="flex-1 relative order-2 md:order-1">
+        <div id="map"></div>
+        <div id="stat-overlay" class="absolute bottom-6 left-6 z-[1000] bg-slate-900/80 text-white p-4 rounded-2xl backdrop-blur shadow-2xl hidden md:block border border-white/10">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p class="text-xs text-slate-400">监控客户总数</p>
+                    <p class="text-xl font-bold" id="stat-count">0</p>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-400">覆盖总产能</p>
+                    <p class="text-xl font-bold" id="stat-capacity">0t</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 侧边详情面板 -->
+    <div id="side-panel" class="panel-transition fixed md:relative right-0 top-0 h-full w-full md:w-[450px] bg-white shadow-2xl z-[2000] translate-x-full md:translate-x-0 flex flex-col border-l border-slate-200">
+        <!-- 头部 -->
+        <div class="p-5 border-b flex justify-between items-center bg-slate-50/50">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                </div>
+                <h2 class="font-bold text-slate-800">企业战情看板</h2>
+            </div>
+            <div class="flex gap-1">
+                <button onclick="toggleEdit()" class="p-2 hover:bg-slate-200 rounded-full text-slate-600"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
+                <button onclick="closePanel()" class="p-2 hover:bg-red-50 rounded-full text-slate-400 hover:text-red-500 md:hidden"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+            </div>
+        </div>
+
+        <!-- 内容区 -->
+        <div id="panel-content" class="flex-1 overflow-y-auto p-6 space-y-6">
+            <div class="flex flex-col items-center justify-center h-full text-slate-400 space-y-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
+                <p>点击地图标记查看客户详情</p>
+            </div>
+        </div>
+
+        <!-- 操作栏 -->
+        <div id="panel-footer" class="p-4 bg-slate-50 border-t hidden flex gap-2">
+            <button onclick="saveData()" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">更新战情信息</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // 初始化变量
+        let map;
+        let markers = {};
+        let currentId = null;
+        let isEditing = false;
+        
+        // 初始示例数据 (行业重点：化纤级钛白粉应用)
+        let customers = [
+            { 
+                id: 1, 
+                name: "浙江金彩新材料有限公司", 
+                lat: 30.25, lng: 120.15, 
+                type: "重点中间商",
+                capacity: 12000, // 吨/年
+                product: "化纤级水冲/半消光钛白粉",
+                contacts: "张经理 (138****8888)",
+                upstream: "龙佰集团, 中核钛白",
+                downstream: "恒逸石化, 荣盛石化",
+                status: "合作中",
+                notes: "侧重于高端母粒研发，对白度要求极高。"
+            },
+            { 
+                id: 2, 
+                name: "恒逸石化股份有限公司", 
+                lat: 30.18, lng: 120.25, 
+                type: "终端化纤厂",
+                capacity: 850000, // 聚酯产能
+                product: "涤纶长丝, 切片",
+                contacts: "采购部-李总",
+                upstream: "浙江金彩, 宜宾天原",
+                downstream: "下游织造企业",
+                status: "潜在客户",
+                notes: "目前主要使用进口R-104，有国产化替代需求。"
+            }
+        ];
+
+        function initApp() {
+            // 初始化地图
+            map = L.map('map', { zoomControl: false }).setView([30.2, 120.2], 9);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '钛白粉行业地图 v1.0'
+            }).addTo(map);
+
+            L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+            // 更新仪表盘
+            updateDashboard();
+            
+            // 渲染标记
+            customers.forEach(addMarker);
+
+            // 点击地图新增
+            map.on('click', (e) => {
+                if(isEditing) return;
+                const newId = Date.now();
+                const newCust = {
+                    id: newId, name: "新增潜在客户", lat: e.latlng.lat, lng: e.latlng.lng,
+                    type: "待核实", capacity: 0, product: "化纤钛白粉", contacts: "",
+                    upstream: "", downstream: "", status: "初次接触", notes: ""
+                };
+                customers.push(newCust);
+                addMarker(newCust);
+                showDetail(newId, true);
+            });
+
+            document.getElementById('last-update').innerText = new Date().toLocaleString();
+        }
+
+        function addMarker(cust) {
+            const color = cust.type === "重点中间商" ? "#3b82f6" : "#10b981";
+            const icon = L.divIcon({
+                html: `<div style="background:${color}" class="w-4 h-4 rounded-full border-2 border-white shadow-lg animate-pulse"></div>`,
+                className: ''
+            });
+            const marker = L.marker([cust.lat, cust.lng], { icon }).addTo(map);
+            marker.on('click', () => showDetail(cust.id));
+            markers[cust.id] = marker;
+        }
+
+        function showDetail(id, startEdit = false) {
+            currentId = id;
+            isEditing = startEdit;
+            const cust = customers.find(c => c.id === id);
+            
+            document.getElementById('side-panel').classList.remove('translate-x-full');
+            renderContent(cust);
+        }
+
+        function closePanel() {
+            document.getElementById('side-panel').classList.add('translate-x-full');
+            isEditing = false;
+        }
+
+        function toggleEdit() {
+            isEditing = !isEditing;
+            renderContent(customers.find(c => c.id === currentId));
+        }
+
+        function renderContent(cust) {
+            const container = document.getElementById('panel-content');
+            const footer = document.getElementById('panel-footer');
+            footer.style.display = isEditing ? 'flex' : 'none';
+
+            let html = `
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">企业全称</label>
+                        ${isEditing ? 
+                            `<input id="in-name" class="w-full p-3 border-2 border-blue-50 rounded-xl outline-none focus:border-blue-500" value="${cust.name}">` : 
+                            `<h3 class="text-xl font-bold text-slate-800">${cust.name}</h3>`
+                        }
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-blue-50 p-3 rounded-xl">
+                            <p class="text-[10px] text-blue-500 font-bold uppercase">业务类型</p>
+                            ${isEditing ? `<input id="in-type" class="w-full bg-white text-sm" value="${cust.type}">` : `<p class="font-bold text-blue-900">${cust.type}</p>`}
+                        </div>
+                        <div class="bg-emerald-50 p-3 rounded-xl">
+                            <p class="text-[10px] text-emerald-500 font-bold uppercase">年度产值/用量</p>
+                            ${isEditing ? `<input id="in-cap" class="w-full bg-white text-sm" value="${cust.capacity}">` : `<p class="font-bold text-emerald-900">${cust.capacity} t</p>`}
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 pt-4 border-t border-slate-100">
+                        ${renderField("核心联系人", cust.contacts, "in-contacts", "svg-user")}
+                        ${renderField("主要产品/规格", cust.product, "in-product", "svg-box")}
+                        ${renderField("上游供应商 (竞争对手)", cust.upstream, "in-up", "svg-truck")}
+                        ${renderField("下游主要客户 (浙江金彩等)", cust.downstream, "in-down", "svg-link")}
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <p class="text-xs font-bold text-slate-400 mb-1">战情备忘录</p>
+                            ${isEditing ? 
+                                `<textarea id="in-notes" class="w-full h-24 bg-white text-sm p-2 rounded">${cust.notes}</textarea>` : 
+                                `<p class="text-sm text-slate-600 italic">"${cust.notes || '暂无情报记录'}"</p>`
+                            }
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.innerHTML = html;
+        }
+
+        function renderField(label, value, id, iconType) {
+            return `
+                <div class="flex gap-3">
+                    <div class="w-5 h-5 mt-1 text-slate-300">
+                        <svg fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10"/></svg>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">${label}</p>
+                        ${isEditing ? `<input id="${id}" class="w-full border-b text-sm py-1 outline-none focus:border-blue-500" value="${value}">` : `<p class="text-sm text-slate-700">${value || '-'}</p>`}
+                    </div>
+                </div>
+            `;
+        }
+
+        function saveData() {
+            const idx = customers.findIndex(c => c.id === currentId);
+            if(idx > -1) {
+                customers[idx] = {
+                    ...customers[idx],
+                    name: document.getElementById('in-name').value,
+                    type: document.getElementById('in-type').value,
+                    capacity: document.getElementById('in-cap').value,
+                    contacts: document.getElementById('in-contacts').value,
+                    product: document.getElementById('in-product').value,
+                    upstream: document.getElementById('in-up').value,
+                    downstream: document.getElementById('in-down').value,
+                    notes: document.getElementById('in-notes').value
+                };
+                isEditing = false;
+                updateDashboard();
+                renderContent(customers[idx]);
+            }
+        }
+
+        function updateDashboard() {
+            document.getElementById('stat-count').innerText = customers.length;
+            const total = customers.reduce((sum, c) => sum + (parseInt(c.capacity) || 0), 0);
+            document.getElementById('stat-capacity').innerText = total.toLocaleString() + 't';
+        }
+
+        window.onload = initApp;
+    </script>
 </body>
 </html>
