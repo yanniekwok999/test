@@ -3,273 +3,264 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>化纤钛白粉战情地图 (TiO2 Market Intelligence)</title>
+    <title>钛白粉客户供应链地图管理系统</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- SheetJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
-        body { font-family: 'Noto Sans SC', sans-serif; }
-        #map { height: 100%; width: 100%; background: #f8fafc; }
-        .panel-transition { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .marker-cluster-custom { background: rgba(59, 130, 246, 0.6); border-radius: 50%; border: 2px solid white; }
+        body, html { height: 100%; margin: 0; font-family: -apple-system, sans-serif; }
+        #map { height: 100%; width: 100%; z-index: 1; background: #f8fafc; }
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f3f4f6; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); }
+        .leaflet-popup-content-wrapper { border-radius: 16px; padding: 0; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        .leaflet-popup-content { margin: 0; width: 280px !important; }
     </style>
 </head>
-<body class="bg-slate-50 h-screen overflow-hidden flex flex-col md:flex-row">
+<body class="bg-slate-50 text-slate-900 overflow-hidden">
 
-    <!-- 顶部状态栏 -->
-    <div class="absolute top-4 left-4 z-[1000] flex flex-col gap-2 pointer-events-none">
-        <div class="bg-white/90 backdrop-blur-md px-4 py-3 rounded-2xl shadow-xl border border-blue-100 flex items-center gap-3 pointer-events-auto">
-            <div class="relative">
-                <div class="w-3 h-3 bg-blue-600 rounded-full"></div>
-                <div class="absolute inset-0 w-3 h-3 bg-blue-600 rounded-full animate-ping"></div>
-            </div>
-            <div>
-                <h1 class="font-bold text-slate-800 text-sm">钛白粉下游战情监控</h1>
-                <p class="text-[10px] text-slate-500 font-medium">数据最后更新: <span id="last-update">-</span></p>
-            </div>
-        </div>
-        
-        <!-- 搜索栏 -->
-        <div class="bg-white/90 backdrop-blur-md p-2 rounded-xl shadow-lg border border-slate-200 flex items-center gap-2 pointer-events-auto">
-            <input type="text" id="map-search" placeholder="搜索化纤厂、中间商..." class="bg-transparent text-sm outline-none px-2 w-48">
-            <button class="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-            </button>
-        </div>
-    </div>
-
-    <!-- 地图区域 -->
-    <div class="flex-1 relative order-2 md:order-1">
-        <div id="map"></div>
-        <div id="stat-overlay" class="absolute bottom-6 left-6 z-[1000] bg-slate-900/80 text-white p-4 rounded-2xl backdrop-blur shadow-2xl hidden md:block border border-white/10">
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <p class="text-xs text-slate-400">监控客户总数</p>
-                    <p class="text-xl font-bold" id="stat-count">0</p>
+    <div class="flex h-screen">
+        <!-- 侧边栏 -->
+        <aside class="w-96 glass-panel border-r border-slate-200 flex flex-col z-[1000] shadow-xl">
+            <div class="p-6 border-b border-slate-100 bg-white">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="p-2 bg-blue-600 rounded-lg shadow-lg shadow-blue-200">
+                        <i data-lucide="factory" class="text-white w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold tracking-tight text-slate-800 leading-none">钛白粉供应链</h1>
+                        <p class="text-[10px] text-slate-400 mt-1 uppercase tracking-widest font-semibold">Map Management</p>
+                    </div>
                 </div>
-                <div>
-                    <p class="text-xs text-slate-400">覆盖总产能</p>
-                    <p class="text-xl font-bold" id="stat-capacity">0t</p>
+
+                <!-- 上传区域 -->
+                <div id="drop-zone" class="border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center hover:border-blue-400 hover:bg-blue-50/50 transition-all cursor-pointer group bg-slate-50/50 relative">
+                    <input type="file" id="file-input" class="hidden" accept=".xlsx, .xls, .csv">
+                    <i data-lucide="file-spreadsheet" class="mx-auto w-10 h-10 text-slate-300 group-hover:text-blue-500 mb-2 transition-colors"></i>
+                    <p class="text-sm text-slate-600 font-bold">导入客户 Excel</p>
+                    <p class="text-[10px] text-slate-400 mt-1">请确保包含：经度、纬度、需求量</p>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- 侧边详情面板 -->
-    <div id="side-panel" class="panel-transition fixed md:relative right-0 top-0 h-full w-full md:w-[450px] bg-white shadow-2xl z-[2000] translate-x-full md:translate-x-0 flex flex-col border-l border-slate-200">
-        <!-- 头部 -->
-        <div class="p-5 border-b flex justify-between items-center bg-slate-50/50">
-            <div class="flex items-center gap-2">
-                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+            <!-- 列表区域 -->
+            <div class="flex-1 overflow-hidden flex flex-col">
+                <div class="px-6 py-4 flex items-center justify-between bg-slate-50/80 border-b border-slate-100">
+                    <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">需求优先级排序</h2>
+                    <span id="customer-count" class="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">0</span>
                 </div>
-                <h2 class="font-bold text-slate-800">企业战情看板</h2>
+                
+                <div id="customer-list" class="flex-1 overflow-y-auto custom-scroll p-4 space-y-3">
+                    <div class="text-center py-20 text-slate-400">
+                        <i data-lucide="info" class="mx-auto w-10 h-10 mb-3 opacity-20"></i>
+                        <p class="text-sm px-10">未检测到数据<br><span class="text-xs opacity-60">请检查 Excel 是否包含经纬度列</span></p>
+                    </div>
+                </div>
             </div>
-            <div class="flex gap-1">
-                <button onclick="toggleEdit()" class="p-2 hover:bg-slate-200 rounded-full text-slate-600"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
-                <button onclick="closePanel()" class="p-2 hover:bg-red-50 rounded-full text-slate-400 hover:text-red-500 md:hidden"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
-            </div>
-        </div>
+        </aside>
 
-        <!-- 内容区 -->
-        <div id="panel-content" class="flex-1 overflow-y-auto p-6 space-y-6">
-            <div class="flex flex-col items-center justify-center h-full text-slate-400 space-y-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
-                <p>点击地图标记查看客户详情</p>
+        <!-- 地图区域 -->
+        <main class="flex-1 relative">
+            <div id="map"></div>
+            
+            <!-- 状态提示 -->
+            <div class="absolute top-6 left-1/2 -translate-x-1/2 z-[1000]">
+                <div id="status-bar" class="hidden bg-slate-900 text-white px-6 py-2 rounded-full shadow-2xl flex items-center gap-3">
+                    <div id="status-spinner" class="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                    <span id="status-text" class="text-xs font-bold tracking-wide">处理中...</span>
+                </div>
             </div>
-        </div>
-
-        <!-- 操作栏 -->
-        <div id="panel-footer" class="p-4 bg-slate-50 border-t hidden flex gap-2">
-            <button onclick="saveData()" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">更新战情信息</button>
-        </div>
+        </main>
     </div>
 
+    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // 初始化变量
-        let map;
-        let markers = {};
-        let currentId = null;
-        let isEditing = false;
-        
-        // 初始示例数据 (行业重点：化纤级钛白粉应用)
-        let customers = [
-            { 
-                id: 1, 
-                name: "浙江金彩新材料有限公司", 
-                lat: 30.25, lng: 120.15, 
-                type: "重点中间商",
-                capacity: 12000, // 吨/年
-                product: "化纤级水冲/半消光钛白粉",
-                contacts: "张经理 (138****8888)",
-                upstream: "龙佰集团, 中核钛白",
-                downstream: "恒逸石化, 荣盛石化",
-                status: "合作中",
-                notes: "侧重于高端母粒研发，对白度要求极高。"
-            },
-            { 
-                id: 2, 
-                name: "恒逸石化股份有限公司", 
-                lat: 30.18, lng: 120.25, 
-                type: "终端化纤厂",
-                capacity: 850000, // 聚酯产能
-                product: "涤纶长丝, 切片",
-                contacts: "采购部-李总",
-                upstream: "浙江金彩, 宜宾天原",
-                downstream: "下游织造企业",
-                status: "潜在客户",
-                notes: "目前主要使用进口R-104，有国产化替代需求。"
-            }
-        ];
+        lucide.createIcons();
 
-        function initApp() {
-            // 初始化地图
-            map = L.map('map', { zoomControl: false }).setView([30.2, 120.2], 9);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                attribution: '钛白粉行业地图 v1.0'
-            }).addTo(map);
+        // 1. 初始化地图
+        const map = L.map('map', { zoomControl: false }).setView([35.0, 105.0], 4);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-            L.control.zoom({ position: 'bottomright' }).addTo(map);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
 
-            // 更新仪表盘
-            updateDashboard();
+        const markersLayer = L.layerGroup().addTo(map);
+
+        // 2. 交互逻辑
+        const fileInput = document.getElementById('file-input');
+        const dropZone = document.getElementById('drop-zone');
+        const customerList = document.getElementById('customer-list');
+        const countBadge = document.getElementById('customer-count');
+        const statusBar = document.getElementById('status-bar');
+        const statusText = document.getElementById('status-text');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-blue-400', 'bg-blue-50'); });
+        dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('border-blue-400', 'bg-blue-50'); });
+        dropZone.addEventListener('drop', (e) => { 
+            e.preventDefault(); 
+            dropZone.classList.remove('border-blue-400', 'bg-blue-50');
+            handleFile(e.dataTransfer.files[0]); 
+        });
+        fileInput.addEventListener('change', (e) => { handleFile(e.target.files[0]); });
+
+        function handleFile(file) {
+            if (!file) return;
+            showStatus("正在智能读取文件...");
             
-            // 渲染标记
-            customers.forEach(addMarker);
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    if (!workbook.SheetNames.length) {
+                        throw new Error("Excel文件似乎是空的");
+                    }
 
-            // 点击地图新增
-            map.on('click', (e) => {
-                if(isEditing) return;
-                const newId = Date.now();
-                const newCust = {
-                    id: newId, name: "新增潜在客户", lat: e.latlng.lat, lng: e.latlng.lng,
-                    type: "待核实", capacity: 0, product: "化纤钛白粉", contacts: "",
-                    upstream: "", downstream: "", status: "初次接触", notes: ""
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const json = XLSX.utils.sheet_to_json(firstSheet);
+                    
+                    console.log("读取到的原始数据示例:", json[0]); // 调试用
+                    
+                    if (json.length === 0) {
+                        showToast("表格中没有发现数据行");
+                        hideStatus();
+                        return;
+                    }
+
+                    processData(json);
+                } catch (err) {
+                    console.error("解析错误:", err);
+                    showToast("解析失败: " + err.message);
+                    hideStatus();
+                }
+            };
+            reader.onerror = () => {
+                showToast("文件读取中断");
+                hideStatus();
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // 智能匹配字段名函数
+        function findVal(obj, aliases) {
+            const key = Object.keys(obj).find(k => {
+                const s = k.toString().trim().toLowerCase();
+                return aliases.some(a => s.includes(a.toLowerCase()) || a.toLowerCase().includes(s));
+            });
+            return key ? obj[key] : null;
+        }
+
+        function processData(data) {
+            markersLayer.clearLayers();
+            
+            // 核心逻辑：数据转换
+            const processed = data.map((item, index) => {
+                const name = findVal(item, ['客户', '公司', '名称', 'Name', '单位', '厂家']) || `客户-${index+1}`;
+                const rawLat = findVal(item, ['纬度', 'Lat', 'latitude', '坐标Y', 'y']);
+                const rawLng = findVal(item, ['经度', 'Lng', 'longitude', 'Lon', '坐标X', 'x']);
+                const demand = parseFloat(findVal(item, ['需求', '钛白粉需求', 'Demand', '用量', '吨位'])) || 0;
+                
+                return {
+                    name: name,
+                    lat: parseFloat(rawLat),
+                    lng: parseFloat(rawLng),
+                    capacity: findVal(item, ['产能', '规模', 'Capacity']) || '未备注',
+                    demand: demand,
+                    suppliers: findVal(item, ['上游', '供应商', 'Suppliers']) || '未记录',
+                    clients: findVal(item, ['下游', '客户', 'Clients']) || '未记录'
                 };
-                customers.push(newCust);
-                addMarker(newCust);
-                showDetail(newId, true);
+            }).filter(d => !isNaN(d.lat) && !isNaN(d.lng));
+
+            if (processed.length === 0) {
+                showToast("未找到有效坐标，请确认列名是否包含'经度'和'纬度'");
+                customerList.innerHTML = `<div class="text-center py-20 text-red-400 text-xs px-6 font-bold">错误：Excel 中找不到“经度”和“纬度”字段，或坐标数值不正确。</div>`;
+                hideStatus();
+                return;
+            }
+
+            // 按需求降序
+            processed.sort((a, b) => b.demand - a.demand);
+
+            customerList.innerHTML = '';
+            const bounds = [];
+
+            processed.forEach((c, idx) => {
+                const radius = Math.max(6, Math.min(25, Math.sqrt(c.demand) * 0.8 || 7));
+                const color = c.demand > 500 ? '#2563eb' : (c.demand > 100 ? '#60a5fa' : '#94a3b8');
+
+                const marker = L.circleMarker([c.lat, c.lng], {
+                    radius: radius,
+                    fillColor: color,
+                    color: "#ffffff",
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                }).addTo(markersLayer);
+
+                marker.bindPopup(`
+                    <div class="bg-white overflow-hidden text-slate-800">
+                        <div class="bg-blue-600 text-white p-3 font-bold text-sm">${c.name}</div>
+                        <div class="p-3 text-xs space-y-2">
+                            <div class="flex justify-between"><span>需求量:</span><span class="font-bold text-blue-600">${c.demand}T</span></div>
+                            <div class="flex justify-between"><span>产能:</span><span>${c.capacity}</span></div>
+                            <div class="border-t pt-2 mt-2">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase">供应商</p>
+                                <p>${c.suppliers}</p>
+                            </div>
+                        </div>
+                    </div>
+                `);
+
+                const card = document.createElement('div');
+                card.className = "bg-white border border-slate-100 p-4 rounded-xl shadow-sm hover:border-blue-400 transition-all cursor-pointer group";
+                card.innerHTML = `
+                    <div class="flex justify-between">
+                        <span class="font-bold text-slate-800 truncate pr-2">${c.name}</span>
+                        <span class="text-blue-600 font-black text-xs">${c.demand}T</span>
+                    </div>
+                    <div class="text-[10px] text-slate-400 mt-1">产能: ${c.capacity}</div>
+                `;
+                card.onclick = () => {
+                    map.flyTo([c.lat, c.lng], 13);
+                    setTimeout(() => marker.openPopup(), 500);
+                };
+                customerList.appendChild(card);
+                bounds.push([c.lat, c.lng]);
             });
 
-            document.getElementById('last-update').innerText = new Date().toLocaleString();
+            countBadge.textContent = processed.length;
+            lucide.createIcons();
+            map.fitBounds(bounds, { padding: [50, 50] });
+            showStatus(`成功加载 ${processed.length} 条数据`, false);
+            setTimeout(hideStatus, 2000);
         }
 
-        function addMarker(cust) {
-            const color = cust.type === "重点中间商" ? "#3b82f6" : "#10b981";
-            const icon = L.divIcon({
-                html: `<div style="background:${color}" class="w-4 h-4 rounded-full border-2 border-white shadow-lg animate-pulse"></div>`,
-                className: ''
-            });
-            const marker = L.marker([cust.lat, cust.lng], { icon }).addTo(map);
-            marker.on('click', () => showDetail(cust.id));
-            markers[cust.id] = marker;
+        function showStatus(msg, spin = true) {
+            statusText.textContent = msg;
+            statusBar.classList.remove('hidden');
+            document.getElementById('status-spinner').style.display = spin ? 'block' : 'none';
         }
 
-        function showDetail(id, startEdit = false) {
-            currentId = id;
-            isEditing = startEdit;
-            const cust = customers.find(c => c.id === id);
-            
-            document.getElementById('side-panel').classList.remove('translate-x-full');
-            renderContent(cust);
+        function hideStatus() {
+            statusBar.classList.add('hidden');
         }
 
-        function closePanel() {
-            document.getElementById('side-panel').classList.add('translate-x-full');
-            isEditing = false;
+        function showToast(msg) {
+            const t = document.createElement('div');
+            t.className = "fixed bottom-10 left-1/2 -translate-x-1/2 z-[3000] bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl text-sm font-bold animate-bounce";
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 5000);
         }
-
-        function toggleEdit() {
-            isEditing = !isEditing;
-            renderContent(customers.find(c => c.id === currentId));
-        }
-
-        function renderContent(cust) {
-            const container = document.getElementById('panel-content');
-            const footer = document.getElementById('panel-footer');
-            footer.style.display = isEditing ? 'flex' : 'none';
-
-            let html = `
-                <div class="space-y-4">
-                    <div>
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">企业全称</label>
-                        ${isEditing ? 
-                            `<input id="in-name" class="w-full p-3 border-2 border-blue-50 rounded-xl outline-none focus:border-blue-500" value="${cust.name}">` : 
-                            `<h3 class="text-xl font-bold text-slate-800">${cust.name}</h3>`
-                        }
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="bg-blue-50 p-3 rounded-xl">
-                            <p class="text-[10px] text-blue-500 font-bold uppercase">业务类型</p>
-                            ${isEditing ? `<input id="in-type" class="w-full bg-white text-sm" value="${cust.type}">` : `<p class="font-bold text-blue-900">${cust.type}</p>`}
-                        </div>
-                        <div class="bg-emerald-50 p-3 rounded-xl">
-                            <p class="text-[10px] text-emerald-500 font-bold uppercase">年度产值/用量</p>
-                            ${isEditing ? `<input id="in-cap" class="w-full bg-white text-sm" value="${cust.capacity}">` : `<p class="font-bold text-emerald-900">${cust.capacity} t</p>`}
-                        </div>
-                    </div>
-
-                    <div class="space-y-4 pt-4 border-t border-slate-100">
-                        ${renderField("核心联系人", cust.contacts, "in-contacts", "svg-user")}
-                        ${renderField("主要产品/规格", cust.product, "in-product", "svg-box")}
-                        ${renderField("上游供应商 (竞争对手)", cust.upstream, "in-up", "svg-truck")}
-                        ${renderField("下游主要客户 (浙江金彩等)", cust.downstream, "in-down", "svg-link")}
-                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                            <p class="text-xs font-bold text-slate-400 mb-1">战情备忘录</p>
-                            ${isEditing ? 
-                                `<textarea id="in-notes" class="w-full h-24 bg-white text-sm p-2 rounded">${cust.notes}</textarea>` : 
-                                `<p class="text-sm text-slate-600 italic">"${cust.notes || '暂无情报记录'}"</p>`
-                            }
-                        </div>
-                    </div>
-                </div>
-            `;
-            container.innerHTML = html;
-        }
-
-        function renderField(label, value, id, iconType) {
-            return `
-                <div class="flex gap-3">
-                    <div class="w-5 h-5 mt-1 text-slate-300">
-                        <svg fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10"/></svg>
-                    </div>
-                    <div class="flex-1">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase">${label}</p>
-                        ${isEditing ? `<input id="${id}" class="w-full border-b text-sm py-1 outline-none focus:border-blue-500" value="${value}">` : `<p class="text-sm text-slate-700">${value || '-'}</p>`}
-                    </div>
-                </div>
-            `;
-        }
-
-        function saveData() {
-            const idx = customers.findIndex(c => c.id === currentId);
-            if(idx > -1) {
-                customers[idx] = {
-                    ...customers[idx],
-                    name: document.getElementById('in-name').value,
-                    type: document.getElementById('in-type').value,
-                    capacity: document.getElementById('in-cap').value,
-                    contacts: document.getElementById('in-contacts').value,
-                    product: document.getElementById('in-product').value,
-                    upstream: document.getElementById('in-up').value,
-                    downstream: document.getElementById('in-down').value,
-                    notes: document.getElementById('in-notes').value
-                };
-                isEditing = false;
-                updateDashboard();
-                renderContent(customers[idx]);
-            }
-        }
-
-        function updateDashboard() {
-            document.getElementById('stat-count').innerText = customers.length;
-            const total = customers.reduce((sum, c) => sum + (parseInt(c.capacity) || 0), 0);
-            document.getElementById('stat-capacity').innerText = total.toLocaleString() + 't';
-        }
-
-        window.onload = initApp;
     </script>
 </body>
 </html>
