@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>钛白粉供应链管理系统</title>
+    <title>钛白粉供应链管理系统 - 全球版</title>
     
     <!-- PWA 配置 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -11,79 +11,76 @@
     <meta name="apple-mobile-web-app-title" content="钛白粉地图">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/4300/4300334.png">
     
-    <!-- 生成 Web Manifest -->
-    <link rel="manifest" id="pwa-manifest">
-
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- SheetJS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <style>
-        body, html { height: 100%; margin: 0; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
-        #map { height: 100%; width: 100%; z-index: 1; background: #f8fafc; }
+        body, html { height: 100%; margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+        #map { height: 100%; width: 100%; z-index: 1; background: #f1f5f9; }
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: #f3f4f6; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); }
-        .leaflet-popup-content-wrapper { border-radius: 16px; padding: 0; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15); }
-        .leaflet-popup-content { margin: 0 !important; width: 320px !important; }
-        
+        .glass-panel { background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(12px); }
+        .leaflet-popup-content-wrapper { border-radius: 16px; padding: 0; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        .leaflet-popup-content { margin: 0 !important; width: 300px !important; }
         body { position: fixed; width: 100%; height: 100%; overflow: hidden; }
+
+        @media (max-width: 768px) {
+            aside { width: 100%; height: 40%; position: absolute; bottom: 0; left: 0; z-index: 2000; border-right: 0; border-top: 1px solid #e2e8f0; }
+            main { height: 60%; }
+            .flex-col-mobile { flex-direction: column; }
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900">
 
-    <div class="flex h-screen">
+    <div class="flex h-screen flex-col-mobile">
         <!-- 侧边栏 -->
-        <aside class="w-96 glass-panel border-r border-slate-200 flex flex-col z-[1000] shadow-xl">
+        <aside class="w-96 glass-panel border-r border-slate-200 flex flex-col z-[1000] shadow-xl transition-all">
             <div class="p-6 border-b border-slate-100 bg-white">
                 <div class="flex items-center gap-3 mb-6">
-                    <div class="p-2 bg-blue-600 rounded-lg shadow-lg shadow-blue-200">
-                        <i data-lucide="factory" class="text-white w-6 h-6"></i>
+                    <div class="p-2 bg-indigo-600 rounded-lg shadow-lg shadow-indigo-100">
+                        <i data-lucide="globe" class="text-white w-6 h-6"></i>
                     </div>
                     <div>
-                        <h1 class="text-lg font-bold tracking-tight text-slate-800 leading-none">钛白粉供应链</h1>
-                        <p class="text-[10px] text-slate-400 mt-1 uppercase tracking-widest font-semibold">APP 版数据系统</p>
+                        <h1 class="text-lg font-bold tracking-tight text-slate-800 leading-none">钛白粉全球供应链</h1>
+                        <p class="text-[10px] text-slate-400 mt-1 uppercase tracking-widest font-semibold">Global Data System</p>
                     </div>
                 </div>
 
-                <!-- 上传区域 -->
-                <div id="drop-zone" class="border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center hover:border-blue-400 hover:bg-blue-50/50 transition-all cursor-pointer group bg-slate-50/50 relative">
+                <!-- 导入区域 -->
+                <div id="drop-zone" class="border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center hover:border-indigo-400 hover:bg-indigo-50/30 transition-all cursor-pointer group bg-slate-50/50 relative">
                     <input type="file" id="file-input" class="hidden" accept=".xlsx, .xls, .csv">
-                    <i data-lucide="file-spreadsheet" class="mx-auto w-10 h-10 text-slate-300 group-hover:text-blue-500 mb-2 transition-colors"></i>
-                    <p class="text-sm text-slate-600 font-bold">导入/更新客户数据</p>
-                    <p class="text-xs text-slate-400 mt-1 italic">自动识别：用量、供应商、痛点等</p>
+                    <i data-lucide="upload-cloud" class="mx-auto w-8 h-8 text-slate-300 group-hover:text-indigo-500 mb-2 transition-colors"></i>
+                    <p class="text-sm text-slate-600 font-bold">导入数据 (Excel/CSV)</p>
+                    <p class="text-[10px] text-slate-400 mt-1 uppercase">支持三级需求分类显示</p>
                 </div>
             </div>
 
-            <!-- 排序切换与列表 -->
+            <!-- 列表区域 -->
             <div class="flex-1 overflow-hidden flex flex-col">
-                <div class="px-6 py-4 flex items-center justify-between bg-slate-50/80 border-b border-slate-100">
+                <div class="px-6 py-4 flex items-center justify-between bg-slate-50/50 border-b border-slate-100">
                     <div class="flex items-center gap-2">
-                        <i data-lucide="layers" class="w-4 h-4 text-slate-400"></i>
-                        <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">核心客户清单</h2>
+                        <i data-lucide="list" class="w-4 h-4 text-slate-400"></i>
+                        <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">客户名录</h2>
                     </div>
                     <div class="flex items-center gap-2">
-                        <button id="clear-data" class="text-[10px] text-red-400 hover:text-red-600 font-bold mr-2">清空</button>
-                        <span id="customer-count" class="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">0</span>
+                        <button id="clear-data" class="text-[10px] text-red-400 hover:text-red-600 font-bold px-2">清空</button>
+                        <span id="customer-count" class="bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">0</span>
                     </div>
                 </div>
                 
                 <div id="customer-list" class="flex-1 overflow-y-auto custom-scroll p-4 space-y-3">
-                    <!-- JS 生成列表 -->
+                    <!-- 动态内容 -->
                 </div>
             </div>
 
-            <div class="p-4 border-t border-slate-100 bg-white">
-                <div class="flex justify-between text-[10px] text-slate-400 font-medium">
-                    <span id="storage-status">离线数据库就绪</span>
-                    <span id="install-btn" class="text-blue-500 font-bold hidden cursor-pointer">安装到桌面</span>
-                </div>
+            <div class="p-4 border-t border-slate-100 bg-white flex justify-between items-center">
+                <span class="text-[10px] text-slate-400" id="storage-status">系统就绪</span>
+                <button id="export-template" class="text-[10px] text-indigo-500 font-bold hover:underline">下载示例格式</button>
             </div>
         </aside>
 
@@ -91,17 +88,21 @@
         <main class="flex-1 relative">
             <div id="map"></div>
             
-            <!-- 浮动图例 -->
-            <div class="absolute bottom-10 left-8 z-[1000] bg-white/90 p-4 rounded-2xl border border-slate-200 shadow-2xl backdrop-blur-md">
-                <h4 class="text-xs font-bold text-slate-800 mb-3 border-b pb-2 italic">需求量 (T)</h4>
-                <div class="space-y-3">
+            <!-- 比例尺/图例 (更新为三级) -->
+            <div class="absolute bottom-8 left-8 z-[1000] bg-white/90 p-4 rounded-xl border border-slate-200 shadow-lg backdrop-blur-md hidden sm:block">
+                <p class="text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">需求分级</p>
+                <div class="space-y-2">
                     <div class="flex items-center gap-3">
-                        <div class="w-5 h-5 rounded-full bg-blue-600/20 border-2 border-blue-600"></div>
-                        <span class="text-xs text-slate-600">核心 ( > 500 )</span>
+                        <div class="w-3 h-3 rounded-full bg-indigo-600"></div>
+                        <span class="text-xs text-slate-600">核心客户 (>500T)</span>
                     </div>
                     <div class="flex items-center gap-3">
-                        <div class="w-3 h-3 rounded-full bg-blue-400/20 border-2 border-blue-400"></div>
-                        <span class="text-xs text-slate-600">重点 ( 100-500 )</span>
+                        <div class="w-3 h-3 rounded-full bg-blue-400"></div>
+                        <span class="text-xs text-slate-600">重点客户 (100-500T)</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-3 h-3 rounded-full bg-slate-400"></div>
+                        <span class="text-xs text-slate-600">普通客户 (<100T)</span>
                     </div>
                 </div>
             </div>
@@ -109,36 +110,23 @@
             <!-- 状态提示 -->
             <div class="absolute top-6 left-1/2 -translate-x-1/2 z-[1000]">
                 <div id="status-bar" class="hidden bg-slate-900 text-white px-6 py-2 rounded-full shadow-2xl flex items-center gap-3">
-                    <div class="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                    <span id="status-text" class="text-xs font-bold tracking-wide">处理中...</span>
+                    <div class="w-2 h-2 bg-indigo-400 rounded-full animate-ping"></div>
+                    <span id="status-text" class="text-xs font-bold tracking-wide">数据处理中</span>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // --- PWA 配置 ---
-        const manifest = {
-            "name": "钛白粉客户地图",
-            "short_name": "钛白粉地图",
-            "start_url": ".",
-            "display": "standalone",
-            "background_color": "#ffffff",
-            "theme_color": "#2563eb",
-            "icons": [{ "src": "https://cdn-icons-png.flaticon.com/512/4300/4300334.png", "sizes": "512x512", "type": "image/png" }]
-        };
-        const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
-        document.getElementById('pwa-manifest').setAttribute('href', URL.createObjectURL(blob));
-
-        // --- 地图逻辑 ---
         lucide.createIcons();
-        const map = L.map('map', { zoomControl: false }).setView([35.0, 105.0], 4);
-        L.control.zoom({ position: 'bottomright' }).addTo(map);
+        
+        const map = L.map('map', { 
+            zoomControl: false,
+            attributionControl: false 
+        }).setView([30.0, 110.0], 4);
 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap'
+            maxZoom: 19
         }).addTo(map);
 
         const markersLayer = L.layerGroup().addTo(map);
@@ -148,183 +136,169 @@
         const countBadge = document.getElementById('customer-count');
         const statusBar = document.getElementById('status-bar');
         const statusText = document.getElementById('status-text');
-        const storageStatus = document.getElementById('storage-status');
 
         window.onload = () => {
-            const savedData = localStorage.getItem('titanium_map_data');
-            if (savedData) {
-                try { renderData(JSON.parse(savedData)); storageStatus.textContent = "本地数据库: 已加载"; } 
-                catch (e) { renderEmptyState(); }
-            } else { renderEmptyState(); }
+            const saved = localStorage.getItem('global_titanium_data');
+            if (saved) {
+                renderData(JSON.parse(saved));
+            } else {
+                renderEmpty();
+            }
         };
 
-        dropZone.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
-        document.getElementById('clear-data').onclick = () => { if(confirm("确定清空数据？")) { localStorage.removeItem('titanium_map_data'); location.reload(); } };
-
-        function handleFile(file) {
+        dropZone.onclick = () => fileInput.click();
+        fileInput.onchange = (e) => {
+            const file = e.target.files[0];
             if (!file) return;
-            showStatus("解析 Excel 中...");
+            
+            showStatus("正在解析全球地理数据...");
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = (ev) => {
                 try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-                    processAndSave(json);
-                } catch (err) { showStatus("格式错误"); setTimeout(hideStatus, 2000); }
+                    const workbook = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+                    const rawData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                    processData(rawData);
+                } catch (err) {
+                    showStatus("文件读取失败");
+                    setTimeout(hideStatus, 2000);
+                }
             };
             reader.readAsArrayBuffer(file);
-        }
+        };
 
-        function findVal(obj, aliases) {
-            const key = Object.keys(obj).find(k => {
-                const s = k.trim().toLowerCase();
-                return aliases.some(a => s.includes(a.toLowerCase()));
-            });
-            return key ? obj[key] : null;
-        }
+        function processData(raw) {
+            const find = (obj, keys) => {
+                const found = Object.keys(obj).find(k => keys.some(key => k.toLowerCase().includes(key)));
+                return found ? obj[found] : null;
+            };
 
-        function processAndSave(data) {
-            const processed = data.map(item => {
-                const demand = parseFloat(findVal(item, ['需求', '用量', 'Demand', 'T', '吨'])) || 0;
-                return {
-                    name: findVal(item, ['客户', '公司', '名称', 'Name', '单位']) || '未命名',
-                    lat: parseFloat(findVal(item, ['纬度', 'Lat'])),
-                    lng: parseFloat(findVal(item, ['经度', 'Lng'])),
-                    capacity: findVal(item, ['产能', '规模', 'Capacity']) || '未知',
-                    demand: demand,
-                    suppliers: findVal(item, ['供应商', '上游', 'Supplier']) || '暂无信息',
-                    process: findVal(item, ['工艺', '生产', 'Process']) || '常规',
-                    painPoints: findVal(item, ['痛点', '问题', 'Pain']) || '无',
-                    contact: findVal(item, ['联系人', 'Contact', '电话']) || '未记录',
-                    notes: findVal(item, ['备注', 'Note']) || '-'
-                };
-            }).filter(d => !isNaN(d.lat) && !isNaN(d.lng));
+            const processed = raw.map(item => ({
+                name: find(item, ['客户', 'name', 'company', '单位']) || '未知企业',
+                lat: parseFloat(find(item, ['lat', '纬度'])),
+                lng: parseFloat(find(item, ['lng', '经度', 'long'])),
+                demand: parseFloat(find(item, ['需求', 'demand', '量', '吨', 't'])) || 0,
+                supplier: find(item, ['供应商', 'supplier', '上游']) || '未记录',
+                pain: find(item, ['痛点', 'pain', '问题']) || '暂无',
+                contact: find(item, ['联系', 'contact', 'tel', '手机']) || '-'
+            })).filter(d => !isNaN(d.lat) && !isNaN(d.lng));
 
-            localStorage.setItem('titanium_map_data', JSON.stringify(processed));
+            localStorage.setItem('global_titanium_data', JSON.stringify(processed));
             renderData(processed);
+            hideStatus();
         }
 
         function renderData(data) {
             markersLayer.clearLayers();
             customerList.innerHTML = '';
+            // 按需求量降序排列
             data.sort((a, b) => b.demand - a.demand);
+            
             const bounds = [];
 
-            data.forEach((c, idx) => {
-                const radius = Math.max(6, Math.min(20, Math.sqrt(c.demand) * 0.7));
-                const color = c.demand > 500 ? '#2563eb' : (c.demand > 100 ? '#60a5fa' : '#94a3b8');
+            data.forEach(c => {
+                // 三级颜色分级逻辑
+                let color = '#94a3b8'; // 默认普通级别颜色 (灰色)
+                let tagColorClass = 'bg-slate-50 text-slate-600';
+
+                if (c.demand > 500) {
+                    color = '#4f46e5'; // 核心级别 (靛蓝色)
+                    tagColorClass = 'bg-indigo-50 text-indigo-600';
+                } else if (c.demand >= 100) {
+                    color = '#60a5fa'; // 重点级别 (天蓝色)
+                    tagColorClass = 'bg-blue-50 text-blue-600';
+                }
+
+                // 动态计算圆点大小
+                const radius = Math.max(5, Math.min(18, Math.sqrt(c.demand) * 0.6));
 
                 const marker = L.circleMarker([c.lat, c.lng], {
-                    radius: radius, fillColor: color, color: "#ffffff", weight: 2, opacity: 1, fillOpacity: 0.8
+                    radius: radius,
+                    fillColor: color,
+                    color: '#fff',
+                    weight: 2,
+                    fillOpacity: 0.8
                 }).addTo(markersLayer);
 
-                // --- 统一对齐的地图弹窗 ---
                 marker.bindPopup(`
-                    <div class="bg-white text-slate-800">
+                    <div class="overflow-hidden">
                         <div class="bg-slate-900 text-white p-4">
-                            <div class="flex justify-between items-start">
-                                <h3 class="font-bold text-base leading-tight">${c.name}</h3>
-                                <span class="bg-blue-600 text-[10px] px-1.5 py-0.5 rounded ml-2 whitespace-nowrap">${c.demand}T</span>
-                            </div>
-                            <div class="mt-2 flex items-center gap-2 opacity-70 text-[11px]">
-                                <i data-lucide="user" class="w-3 h-3"></i>
-                                <span>联系人：${c.contact}</span>
+                            <h3 class="font-bold text-sm">${c.name}</h3>
+                            <div class="flex items-center gap-2 mt-2 text-[10px] opacity-80">
+                                <i data-lucide="phone" class="w-3 h-3"></i> ${c.contact}
                             </div>
                         </div>
-                        <div class="p-4 space-y-3 max-h-[420px] overflow-y-auto custom-scroll">
-                            <!-- 排列一致的信息块 -->
-                            <div class="space-y-2">
-                                <div class="flex items-start gap-3 p-2 bg-slate-50 rounded-lg border border-slate-100">
-                                    <div class="p-1.5 bg-blue-100 rounded text-blue-600 mt-0.5">
-                                        <i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i>
-                                    </div>
-                                    <div class="flex-1">
-                                        <p class="text-[10px] text-slate-400 font-bold uppercase">产能规模</p>
-                                        <p class="text-xs font-bold text-slate-700">${c.capacity}</p>
-                                    </div>
-                                </div>
-
-                                <div class="flex items-start gap-3 p-2 bg-blue-50/50 rounded-lg border border-blue-100">
-                                    <div class="p-1.5 bg-blue-100 rounded text-blue-600 mt-0.5">
-                                        <i data-lucide="truck" class="w-3.5 h-3.5"></i>
-                                    </div>
-                                    <div class="flex-1">
-                                        <p class="text-[10px] text-blue-500 font-bold uppercase">上游供应商</p>
-                                        <p class="text-xs font-medium text-slate-700">${c.suppliers}</p>
-                                    </div>
-                                </div>
-
-                                <div class="flex items-start gap-3 p-2 bg-slate-50 rounded-lg border border-slate-100">
-                                    <div class="p-1.5 bg-slate-200 rounded text-slate-600 mt-0.5">
-                                        <i data-lucide="settings" class="w-3.5 h-3.5"></i>
-                                    </div>
-                                    <div class="flex-1">
-                                        <p class="text-[10px] text-slate-400 font-bold uppercase">工艺流程</p>
-                                        <p class="text-xs text-slate-700">${c.process}</p>
-                                    </div>
-                                </div>
-
-                                <div class="flex items-start gap-3 p-2 bg-red-50 rounded-lg border border-red-100">
-                                    <div class="p-1.5 bg-red-100 rounded text-red-600 mt-0.5">
-                                        <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i>
-                                    </div>
-                                    <div class="flex-1">
-                                        <p class="text-[10px] text-red-500 font-bold uppercase">核心痛点</p>
-                                        <p class="text-xs text-slate-800 italic">${c.painPoints}</p>
-                                    </div>
-                                </div>
+                        <div class="p-4 space-y-3">
+                            <div class="flex justify-between items-center border-b border-slate-50 pb-2">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase">年度需求</span>
+                                <span class="text-sm font-black" style="color:${color}">${c.demand} T</span>
                             </div>
-
-                            <div class="text-[10px] text-slate-400 pt-2 border-t border-dashed">
-                                <span class="font-bold">备注:</span> ${c.notes}
+                            <div>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">当前供应</p>
+                                <p class="text-xs text-slate-700">${c.supplier}</p>
+                            </div>
+                            <div class="bg-red-50 p-2 rounded-lg">
+                                <p class="text-[10px] font-bold text-red-400 uppercase">核心痛点</p>
+                                <p class="text-xs text-red-700 font-medium">${c.pain}</p>
                             </div>
                         </div>
                     </div>
                 `, { closeButton: false });
 
-                // --- 列表同步排列 ---
                 const card = document.createElement('div');
-                card.className = "group bg-white border border-slate-100 p-4 rounded-xl shadow-sm hover:border-blue-300 transition-all cursor-pointer";
+                card.className = "p-4 bg-white border border-slate-100 rounded-xl hover:border-indigo-300 transition-all cursor-pointer shadow-sm";
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-2">
-                        <h4 class="font-bold text-slate-800 truncate pr-2">${c.name}</h4>
-                        <span class="text-[10px] font-black text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">${c.demand}T</span>
+                        <h4 class="font-bold text-slate-800 text-sm truncate w-3/4">${c.name}</h4>
+                        <span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${tagColorClass}">${c.demand}T</span>
                     </div>
-                    <div class="grid grid-cols-1 gap-1.5 mb-3">
-                        <div class="flex items-center gap-2 text-[10px] text-slate-500">
-                            <i data-lucide="truck" class="w-3 h-3 text-blue-400"></i>
-                            <span class="truncate">供应商: ${c.suppliers}</span>
-                        </div>
-                        <div class="flex items-center gap-2 text-[10px] text-red-400 font-medium">
-                            <i data-lucide="alert-circle" class="w-3 h-3"></i>
-                            <span class="truncate">痛点: ${c.painPoints}</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center justify-between text-[10px] text-slate-400 font-bold pt-2 border-t border-slate-50">
-                        <span>${c.contact}</span>
-                        <i data-lucide="chevron-right" class="w-3 h-3 group-hover:translate-x-1 transition-transform"></i>
+                    <div class="text-[11px] text-slate-500 space-y-1">
+                        <div class="flex items-center gap-1"><i data-lucide="truck" class="w-3 h-3 text-slate-300"></i> ${c.supplier}</div>
+                        <div class="flex items-center gap-1 text-red-400"><i data-lucide="alert-triangle" class="w-3 h-3"></i> ${c.pain}</div>
                     </div>
                 `;
-                card.onclick = () => { map.flyTo([c.lat, c.lng], 12); setTimeout(() => marker.openPopup(), 1000); };
+                card.onclick = () => {
+                    map.flyTo([c.lat, c.lng], 12);
+                    setTimeout(() => marker.openPopup(), 500);
+                };
                 customerList.appendChild(card);
                 bounds.push([c.lat, c.lng]);
             });
 
             countBadge.textContent = data.length;
             lucide.createIcons();
-            if (bounds.length > 0) map.fitBounds(bounds, { padding: [40, 40] });
-            hideStatus();
+            if (bounds.length) map.fitBounds(bounds, { padding: [50, 50] });
         }
 
-        function renderEmptyState() {
-            customerList.innerHTML = `<div class="text-center py-20 text-slate-300"><i data-lucide="database" class="mx-auto w-10 h-10 mb-2 opacity-20"></i><p class="text-xs">暂无数据，请导入文件</p></div>`;
+        function renderEmpty() {
+            customerList.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-20 text-slate-300 italic">
+                    <i data-lucide="map-pin" class="w-12 h-12 mb-4 opacity-20"></i>
+                    <p class="text-xs">等待数据导入...</p>
+                </div>
+            `;
             lucide.createIcons();
         }
 
         function showStatus(msg) { statusText.textContent = msg; statusBar.classList.remove('hidden'); }
         function hideStatus() { statusBar.classList.add('hidden'); }
+
+        document.getElementById('clear-data').onclick = () => {
+            if(confirm("确定要删除所有本地缓存的数据吗？")) {
+                localStorage.removeItem('global_titanium_data');
+                location.reload();
+            }
+        };
+
+        document.getElementById('export-template').onclick = () => {
+            const ws = XLSX.utils.json_to_sheet([
+                { "客户名称": "核心企业示例", "纬度": 31.23, "经度": 121.47, "年度需求": 800, "供应商": "科慕", "痛点": "价格波动大", "联系人": "张经理" },
+                { "客户名称": "重点企业示例", "纬度": 39.9, "经度": 116.4, "年度需求": 350, "供应商": "龙佰", "痛点": "物流慢", "联系人": "李经理" },
+                { "客户名称": "普通客户示例", "纬度": 22.3, "经度": 114.1, "年度需求": 50, "供应商": "本地商", "痛点": "质量不稳定", "联系人": "王工" }
+            ]);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "模板");
+            XLSX.writeFile(wb, "钛白粉三级分级导入模板.xlsx");
+        };
     </script>
 </body>
 </html>
