@@ -117,7 +117,7 @@
         import { getFirestore, collection, doc, setDoc, onSnapshot, deleteDoc, updateDoc, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // 用户提供的私有配置
+        // 用户提供的私有配置 - 已直接集成
         const userFirebaseConfig = {
             apiKey: "AIzaSyCwbnaYt4w9ZgqBsFR7IfOOZNlkRQpyaO4",
             authDomain: "honti-a3783.firebaseapp.com",
@@ -129,27 +129,34 @@
         };
 
         let db, auth, dataCollection;
+        // 获取 appId
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'honti-titanium-app';
 
         async function initFirebase() {
             try {
-                // 优先检查系统注入配置，如果没有则使用用户提供的配置
+                // 安全检查：如果 __firebase_config 未定义，则使用硬编码配置
                 let finalConfig = userFirebaseConfig;
+                
                 if (typeof __firebase_config !== 'undefined' && __firebase_config) {
                     try {
-                        finalConfig = JSON.parse(__firebase_config);
-                        console.log("Using system injected Firebase config");
-                    } catch(e) { console.warn("System config parse failed, using provided config"); }
+                        const injectedConfig = JSON.parse(__firebase_config);
+                        finalConfig = injectedConfig;
+                        console.log("使用系统注入配置");
+                    } catch(e) { 
+                        console.warn("解析注入配置失败，回退到私有配置"); 
+                    }
+                } else {
+                    console.log("未检测到系统注入配置，直接使用私有 Firebase 配置");
                 }
 
                 const app = initializeApp(finalConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
                 
-                // 核心规则：必须使用特定的路径结构以匹配环境权限
+                // 路径结构
                 dataCollection = collection(db, 'artifacts', appId, 'public', 'data', 'customers');
 
-                // 身份验证逻辑 (RULE 3)
+                // 身份验证逻辑
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
@@ -183,12 +190,12 @@
         }
 
         function startRealtimeSync() {
-            // 实时监听 (RULE 2: 简单查询)
             onSnapshot(dataCollection, (snapshot) => {
                 const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 window.renderApp(data);
             }, (err) => {
-                updateStatus("权限受限: 请检查数据库规则", true);
+                console.error("Firestore sync error:", err);
+                updateStatus("同步失败: 请检查数据库权限规则", true);
             });
         }
 
@@ -212,7 +219,7 @@
     </script>
 
     <script>
-        // 地图与 UI 逻辑
+        // UI 逻辑保持不变
         lucide.createIcons();
         let currentData = [];
         const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([34.0, 108.0], 4);
