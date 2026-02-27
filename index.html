@@ -106,7 +106,7 @@
                         <i data-lucide="file-up" class="w-6 h-6 text-indigo-600"></i>
                     </div>
                     <p class="text-[11px] text-slate-700 font-black">导入 EXCEL 数据</p>
-                    <p class="text-[9px] text-slate-400 mt-1 text-center">需包含列名：客户名、经度、纬度</p>
+                    <p class="text-[9px] text-slate-400 mt-1 text-center">必需列：客户、经度、纬度</p>
                 </div>
             </div>
         </aside>
@@ -129,7 +129,6 @@
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'honti-titanium-supply-chain';
         let db, auth, dataCollection;
 
-        // 默认配置
         const myFirebaseConfig = {
             apiKey: "AIzaSyCwbnaYt4w9ZgqBsFR7IfOOZNlkRQpyaO4",
             authDomain: "honti-a3783.firebaseapp.com",
@@ -150,7 +149,6 @@
                 db = getFirestore(app);
                 auth = getAuth(app);
                 
-                // 执行匿名登录以满足 Firestore 规则 (request.auth != null)
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
@@ -160,7 +158,6 @@
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
                         updateStatus("云端连接成功", false);
-                        // 强制使用符合规则的路径结构
                         dataCollection = collection(db, 'artifacts', appId, 'public', 'data', 'customers');
                         startSync();
                     } else {
@@ -196,7 +193,7 @@
                 window.renderApp(data);
             }, (err) => {
                 console.error("Firestore Listen Error:", err);
-                updateStatus("权限错误: 请确保 Firestore 规则已发布", true);
+                updateStatus("同步异常，请检查网络", true);
             });
         }
 
@@ -220,7 +217,6 @@
     </script>
 
     <script>
-        // 渲染与地图逻辑
         lucide.createIcons();
         let currentData = [];
         const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([34.0, 108.0], 5);
@@ -260,7 +256,7 @@
                             <span class="text-[10px] text-slate-400 font-bold uppercase">需求</span>
                             <span class="text-xs font-black text-indigo-600">${item.demand || 0} T</span>
                         </div>
-                        <button onclick="triggerEdit('${item.id}')" class="w-full bg-slate-900 text-white text-[10px] font-bold py-2 mt-2 rounded-xl active:scale-95 transition-all shadow-lg">编辑云端数据</button>
+                        <button onclick="triggerEdit('${item.id}')" class="w-full bg-slate-900 text-white text-[10px] font-bold py-2 mt-2 rounded-xl shadow-lg">编辑数据</button>
                     </div>
                 `);
 
@@ -282,37 +278,73 @@
             document.getElementById('customer-count-badge').textContent = `${data.length} 位活跃客户`;
         };
 
-        // 数据导入
+        // 增强版数据导入
         document.getElementById('drop-zone').onclick = () => document.getElementById('file-input').click();
         document.getElementById('file-input').onchange = (e) => {
             const file = e.target.files[0];
             if (!file) return;
+            
+            showToast("正在读取文件...");
             const reader = new FileReader();
             reader.onload = async (ev) => {
                 try {
-                    const workbook = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
-                    const raw = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-                    let count = 0;
+                    const dataArray = new Uint8Array(ev.target.result);
+                    const workbook = XLSX.read(dataArray, { type: 'array', cellDates: true });
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const raw = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+                    
+                    if (raw.length === 0) {
+                        showToast("Excel 文件内容为空", true);
+                        return;
+                    }
+
+                    // 模糊匹配函数：更强大的匹配逻辑
+                    const findKey = (row, keywords) => {
+                        return Object.keys(row).find(k => 
+                            keywords.some(pk => k.toLowerCase().includes(pk.toLowerCase()))
+                        );
+                    };
+
+                    let successCount = 0;
+                    let errorCount = 0;
 
                     for (let row of raw) {
-                        const findK = (pts) => Object.keys(row).find(k => pts.some(p => k.includes(p)));
-                        const lat = parseFloat(row[findK(['纬度', 'lat'])]);
-                        const lng = parseFloat(row[findK(['经度', 'lng'])]);
+                        // 寻找对应列
+                        const nameKey = findKey(row, ['客户', '公司', '名称', 'name', '单位']);
+                        const latKey = findKey(row, ['纬度', 'lat', 'y轴', '纬']);
+                        const lngKey = findKey(row, ['经度', 'lng', 'lon', 'x轴', '经']);
+                        const demandKey = findKey(row, ['需求', '量', 'demand', '吨', '重']);
+                        const supplierKey = findKey(row, ['厂家', '供', 'supplier', '品牌']);
+                        const remarkKey = findKey(row, ['备注', '说明', '痛点', 'remark', 'info']);
+
+                        const lat = parseFloat(row[latKey]);
+                        const lng = parseFloat(row[lngKey]);
+
                         if (!isNaN(lat) && !isNaN(lng)) {
                             await window.cloudOps.add({
-                                name: row[findK(['名称', '客户', '公司'])] || '未命名',
-                                lat, lng,
-                                demand: parseFloat(row[findK(['量', '需求'])] || 0),
-                                supplier: row[findK(['厂家', '供'])] || '',
-                                remark: row[findK(['备注', '痛点'])] || '',
+                                name: String(row[nameKey] || '未命名客户'),
+                                lat, 
+                                lng,
+                                demand: parseFloat(row[demandKey]) || 0,
+                                supplier: String(row[supplierKey] || ""),
+                                remark: String(row[remarkKey] || ""),
                                 lastUpdated: new Date().toISOString()
                             });
-                            count++;
+                            successCount++;
+                        } else {
+                            errorCount++;
+                            console.warn("跳过行（经纬度无效）:", row);
                         }
                     }
-                    showToast(`成功导入 ${count} 条记录`);
-                } catch (err) { showToast("解析失败", true); }
+                    
+                    showToast(`导入完毕: 成功 ${successCount} 条, 失败 ${errorCount} 条`);
+                    e.target.value = ""; // 重置 input
+                } catch (err) {
+                    console.error("Excel Parse Error:", err);
+                    showToast("文件解析失败，请检查格式", true);
+                }
             };
+            reader.onerror = () => showToast("读取文件失败", true);
             reader.readAsArrayBuffer(file);
         };
 
@@ -339,28 +371,31 @@
             try {
                 await window.cloudOps.update(id, updates);
                 closeEditModal();
-                showToast("已保存至云端");
+                showToast("云端更新成功");
             } catch (e) { showToast("保存失败", true); }
         }
 
         async function deleteCustomer() {
             const id = document.getElementById('edit-id').value;
-            if (confirm("确定从云端永久删除？")) {
+            if (confirm("确定要删除这条云端记录吗？")) {
                 try {
                     await window.cloudOps.delete(id);
                     closeEditModal();
-                    showToast("已删除");
+                    showToast("记录已删除");
                 } catch (e) { showToast("删除失败", true); }
             }
         }
 
         function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
+        
         function showToast(msg, isError = false) {
             const toast = document.createElement('div');
-            toast.className = `fixed bottom-10 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 rounded-2xl text-white text-[11px] font-black shadow-2xl transition-all duration-300 transform translate-y-2 opacity-0 ${isError ? 'bg-red-500' : 'bg-slate-900'}`;
+            toast.className = `fixed bottom-10 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 rounded-2xl text-white text-[11px] font-black shadow-2xl transition-all duration-300 transform translate-y-2 opacity-0 ${isError ? 'bg-red-500' : 'bg-indigo-600'}`;
             toast.textContent = msg;
             document.body.appendChild(toast);
-            setTimeout(() => { toast.classList.remove('translate-y-2', 'opacity-0'); }, 10);
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
             setTimeout(() => {
                 toast.classList.add('translate-y-2', 'opacity-0');
                 setTimeout(() => toast.remove(), 300);
