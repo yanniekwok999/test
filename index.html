@@ -272,11 +272,11 @@
         }
 
         function openEditPopup(item, marker) {
+            // 已移除右上角的 ID span
             const content = `
                 <div class="font-sans">
                     <div class="bg-indigo-900 text-white p-3 flex justify-between items-center">
                         <h3 class="font-bold text-xs truncate mr-4">${item.name}</h3>
-                        <span class="text-[9px] bg-indigo-500 px-1.5 py-0.5 rounded">ID: ${item.id % 10000}</span>
                     </div>
                     <div class="p-4 space-y-2 bg-white max-h-[400px] overflow-y-auto custom-scroll">
                         <div class="info-grid">
