@@ -5,12 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>钛白粉全球供应链管理系统</title>
     
-    <!-- CDN 资源 -->
+    <!-- 优化后的 CDN 资源，确保海内外稳定且变量定义正确 -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="https://lib.baomitu.com/leaflet/1.9.4/leaflet.css" />
+    <script src="https://lib.baomitu.com/leaflet/1.9.4/leaflet.js"></script>
+    <script src="https://lib.baomitu.com/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- 使用更通用的 Lucide 加载方式 -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     
     <style>
         body, html { height: 100%; margin: 0; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; -webkit-tap-highlight-color: transparent; overflow: hidden; }
@@ -119,7 +120,15 @@
     </div>
 
     <script>
-        lucide.createIcons();
+        // 安全初始化 Lucide 图标的辅助函数
+        function initIcons() {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            } else {
+                console.warn('Lucide library not yet loaded, retrying...');
+                setTimeout(initIcons, 100);
+            }
+        }
         
         const sidebar = document.getElementById('sidebar');
         const openBtn = document.getElementById('open-sidebar');
@@ -133,17 +142,17 @@
 
         let currentData = [];
 
-        // 修改点：切换到全球通用的 OpenStreetMap (OSM)
+        // 初始化地图
         const map = L.map('map', { 
             zoomControl: false,
             attributionControl: false,
-            worldCopyJump: true // 解决跨日期变更线的显示问题
-        }).setView([20, 0], 2); // 初始视角设为全球范围
+            worldCopyJump: true
+        }).setView([30, 100], 3); 
 
-        // 使用 OSM 瓦片，支持全球无死角显示
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            minZoom: 2
+        // 切换到底图：使用更兼容海内外的瓦片源
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            subdomains: 'abcd',
+            maxZoom: 20
         }).addTo(map);
 
         const markersLayer = L.layerGroup().addTo(map);
@@ -161,13 +170,13 @@
         openBtn.onclick = () => toggleSidebar(true);
 
         window.onload = () => {
+            initIcons();
             const saved = localStorage.getItem('global_titanium_data');
             if (saved) {
                 currentData = JSON.parse(saved);
                 renderData(currentData);
             } else {
                 renderEmpty();
-                // 如果没有数据，默认展开侧边栏引导上传
                 toggleSidebar(true);
             }
         };
@@ -321,7 +330,7 @@
                         saveToLocal();
                         renderData(currentData);
                         map.closePopup();
-                        showStatus("全球同步成功");
+                        showStatus("同步成功");
                         setTimeout(hideStatus, 2000);
                     };
                 }
@@ -337,7 +346,7 @@
                     <p class="text-[10px]">等待上传全球数据</p>
                 </div>
             `;
-            lucide.createIcons();
+            initIcons();
         }
 
         function showStatus(msg) { statusText.textContent = msg; statusBar.classList.remove('hidden'); }
@@ -356,31 +365,31 @@
         document.getElementById('export-current').onclick = () => {
             if (currentData.length === 0) return;
             const exportData = currentData.map(item => ({
-                "Customer Name": item.name,
-                "Latitude": item.lat,
-                "Longitude": item.lng,
-                "Annual Demand(T)": item.demand,
-                "Capacity": item.capacity,
-                "Supplier": item.supplier,
-                "Pain Points": item.pain,
-                "Process": item.process,
-                "Remarks": item.remark
+                "企业名称": item.name,
+                "纬度": item.lat,
+                "经度": item.lng,
+                "年需求量(吨)": item.demand,
+                "当前产能": item.capacity,
+                "现有供应商": item.supplier,
+                "业务痛点": item.pain,
+                "工艺类型": item.process,
+                "备注信息": item.remark
             }));
             const ws = XLSX.utils.json_to_sheet(exportData);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "GlobalSupplyChain");
-            XLSX.writeFile(wb, `Global_Supply_Chain_${new Date().toISOString().split('T')[0]}.xlsx`);
+            XLSX.utils.book_append_sheet(wb, ws, "供应链数据");
+            XLSX.writeFile(wb, `供应链数据_${new Date().toISOString().split('T')[0]}.xlsx`);
         };
 
         document.getElementById('export-template').onclick = () => {
             const template = [
-                { "Name": "USA Client Example", "Lat": 34.05, "Lng": -118.24, "Demand": 2000, "Capacity": "500kt", "Supplier": "Vendor A", "Pain": "Shipping delay" },
-                { "Name": "China Client Example", "Lat": 31.23, "Lng": 121.47, "Demand": 1500, "Capacity": "300kt", "Supplier": "Vendor B", "Pain": "Price sensitive" }
+                { "Name": "美国客户示例", "Lat": 34.05, "Lng": -118.24, "Demand": 2000, "Capacity": "500kt", "Supplier": "供应商A", "Pain": "物流延迟" },
+                { "Name": "中国客户示例", "Lat": 31.23, "Lng": 121.47, "Demand": 1500, "Capacity": "300kt", "Supplier": "供应商B", "Pain": "对价格敏感" }
             ];
             const ws = XLSX.utils.json_to_sheet(template);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Template");
-            XLSX.writeFile(wb, "Global_Import_Template.xlsx");
+            XLSX.utils.book_append_sheet(wb, ws, "导入模板");
+            XLSX.writeFile(wb, "全球供应链导入模板.xlsx");
         };
     </script>
 </body>
