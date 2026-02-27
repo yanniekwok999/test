@@ -26,86 +26,94 @@
 </head>
 <body class="bg-slate-50 text-slate-900">
 
-    <!-- 状态指示条 -->
+    <!-- 云端状态指示条 -->
     <div class="fixed top-6 left-1/2 -translate-x-1/2 z-[5000]">
         <div id="status-bar" class="bg-slate-900/90 backdrop-blur text-white px-6 py-2 rounded-full shadow-2xl flex items-center gap-3">
-            <div id="status-dot" class="w-2 h-2 bg-indigo-400 rounded-full animate-ping"></div>
-            <span id="status-text" class="text-xs font-bold tracking-wide">正在初始化云端配置...</span>
+            <div id="status-dot" class="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+            <span id="status-text" class="text-[10px] font-bold tracking-widest uppercase">正在同步云端...</span>
         </div>
     </div>
 
     <!-- 编辑模态框 -->
     <div id="edit-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-[6000]">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-white/20">
             <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                <h3 class="font-bold text-slate-800 flex items-center gap-2">客户详情管理</h3>
+                <h3 class="font-bold text-slate-800 flex items-center gap-2">客户资料编辑</h3>
                 <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div id="edit-form" class="p-6 space-y-4 max-h-[60vh] overflow-y-auto custom-scroll">
                 <input type="hidden" id="edit-id">
                 <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">客户名称</label>
-                    <input type="text" id="edit-name" class="mt-1 block w-full border rounded-lg p-2 text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">客户名称</label>
+                    <input type="text" id="edit-name" class="mt-1 block w-full border border-slate-200 rounded-xl p-3 text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="text-[10px] font-bold text-slate-400 uppercase">需求量 (吨)</label>
-                        <input type="number" id="edit-demand" class="mt-1 block w-full border rounded-lg p-2 text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">月需求量 (吨)</label>
+                        <input type="number" id="edit-demand" class="mt-1 block w-full border border-slate-200 rounded-xl p-3 text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
                     </div>
                     <div>
-                        <label class="text-[10px] font-bold text-slate-400 uppercase">供应商</label>
-                        <input type="text" id="edit-supplier" class="mt-1 block w-full border rounded-lg p-2 text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">主供厂家</label>
+                        <input type="text" id="edit-supplier" class="mt-1 block w-full border border-slate-200 rounded-xl p-3 text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
                     </div>
                 </div>
                 <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">备注/痛点</label>
-                    <textarea id="edit-remark" rows="3" class="mt-1 block w-full border rounded-lg p-2 text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">备注/痛点分析</label>
+                    <textarea id="edit-remark" rows="3" class="mt-1 block w-full border border-slate-200 rounded-xl p-3 text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"></textarea>
                 </div>
             </div>
             <div class="p-4 border-t border-slate-100 bg-slate-50 flex justify-between gap-3">
-                <button onclick="deleteCustomer()" class="px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 rounded-lg transition-colors">删除记录</button>
+                <button onclick="deleteCustomer()" class="px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 rounded-xl transition-colors">删除此记录</button>
                 <div class="flex gap-2">
-                    <button onclick="closeEditModal()" class="px-4 py-2 text-xs font-bold text-slate-500">取消</button>
-                    <button onclick="saveEdit()" class="px-6 py-2 text-xs font-bold bg-indigo-600 text-white rounded-lg shadow-lg hover:bg-indigo-700 transition-all">确认同步</button>
+                    <button onclick="closeEditModal()" class="px-4 py-2 text-xs font-bold text-slate-400">取消</button>
+                    <button onclick="saveEdit()" class="px-6 py-2 text-xs font-bold bg-indigo-600 text-white rounded-xl shadow-lg hover:bg-indigo-700 transition-all">保存更改</button>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="flex h-screen relative overflow-hidden">
-        <aside id="sidebar" class="w-80 md:w-96 glass-panel border-r border-slate-200 flex flex-col z-[2000] shadow-xl sidebar-transition absolute h-full left-0 top-0">
-            <div class="p-6 border-b border-slate-100 bg-white flex items-center justify-between">
+        <!-- 侧边栏 -->
+        <aside id="sidebar" class="w-80 md:w-96 glass-panel border-r border-slate-200 flex flex-col z-[2000] shadow-2xl sidebar-transition absolute h-full left-0 top-0">
+            <div class="p-6 border-b border-slate-100 bg-white/50 flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <div class="p-2 bg-indigo-600 rounded-lg text-white shadow-lg shadow-indigo-200"><i data-lucide="database" class="w-5 h-5"></i></div>
+                    <div class="p-2.5 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-xl text-white shadow-xl shadow-indigo-100">
+                        <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                    </div>
                     <div>
-                        <h1 class="text-sm font-bold text-slate-800">钛白粉云管理</h1>
-                        <p class="text-[10px] text-slate-400 font-medium">Data Intelligence</p>
+                        <h1 class="text-sm font-black text-slate-800 tracking-tight">钛白粉供应链</h1>
+                        <p class="text-[9px] text-indigo-500 font-bold uppercase tracking-widest">Global Cloud Sync</p>
                     </div>
                 </div>
-                <button id="close-sidebar" class="p-2 text-slate-400 hover:bg-slate-50 rounded-lg"><i data-lucide="chevron-left" class="w-5 h-5"></i></button>
+                <button id="close-sidebar" class="p-2 text-slate-400 hover:bg-slate-100 rounded-xl transition-colors"><i data-lucide="chevron-left" class="w-5 h-5"></i></button>
             </div>
             
             <div class="flex-1 overflow-hidden flex flex-col">
-                <div class="px-6 py-3 bg-slate-50/80 border-b flex justify-between items-center">
-                    <h2 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">客户实时清单</h2>
-                    <span id="customer-count-badge" class="bg-indigo-100 text-indigo-600 text-[9px] px-2 py-0.5 rounded-full font-bold">连接中...</span>
+                <div class="px-6 py-3 bg-slate-50/50 border-b flex justify-between items-center">
+                    <h2 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">实时客户清单</h2>
+                    <span id="customer-count-badge" class="bg-indigo-600 text-white text-[9px] px-2 py-0.5 rounded-full font-black">---</span>
                 </div>
-                <div id="customer-list" class="flex-1 overflow-y-auto custom-scroll p-4 space-y-2"></div>
+                <div id="customer-list" class="flex-1 overflow-y-auto custom-scroll p-4 space-y-2.5">
+                    <!-- 列表项 -->
+                </div>
             </div>
 
-            <div class="p-6 border-t bg-slate-50/30">
-                <div id="drop-zone" class="group border-2 border-dashed border-slate-200 rounded-xl p-5 text-center hover:border-indigo-400 hover:bg-white cursor-pointer transition-all">
+            <!-- 底部上传区 -->
+            <div class="p-6 border-t bg-slate-50/50">
+                <div id="drop-zone" class="group border-2 border-dashed border-slate-200 rounded-2xl p-5 text-center hover:border-indigo-400 hover:bg-white cursor-pointer transition-all duration-300">
                     <input type="file" id="file-input" class="hidden" accept=".xlsx, .xls, .csv">
-                    <div class="bg-slate-100 w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
-                        <i data-lucide="upload-cloud" class="w-5 h-5"></i>
+                    <div class="bg-indigo-50 w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                        <i data-lucide="file-up" class="w-6 h-6 text-indigo-600"></i>
                     </div>
-                    <p class="text-[11px] text-slate-600 font-bold">导入 Excel 数据</p>
+                    <p class="text-[11px] text-slate-700 font-black">导入 EXCEL 数据</p>
+                    <p class="text-[9px] text-slate-400 mt-1">支持实时云同步</p>
                 </div>
             </div>
         </aside>
 
+        <!-- 地图主区 -->
         <main class="flex-1 relative h-full w-full">
-            <button id="open-sidebar" class="absolute top-6 left-6 z-[1500] bg-white p-3 rounded-xl shadow-xl hover:bg-slate-50 border border-slate-100">
+            <button id="open-sidebar" class="absolute top-6 left-6 z-[1500] bg-white p-3.5 rounded-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all border border-slate-100 hidden">
                 <i data-lucide="menu" class="w-6 h-6 text-indigo-600"></i>
             </button>
             <div id="map"></div>
@@ -118,51 +126,54 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         // 获取 appId
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'honti-titanium-app';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'honti-titanium-supply-chain';
         let db, auth, dataCollection;
+
+        // 您的专属配置
+        const myFirebaseConfig = {
+            apiKey: "AIzaSyCwbnaYt4w9ZgqBsFR7IfOOZNlkRQpyaO4",
+            authDomain: "honti-a3783.firebaseapp.com",
+            projectId: "honti-a3783",
+            storageBucket: "honti-a3783.firebasestorage.app",
+            messagingSenderId: "317723988500",
+            appId: "1:317723988500:web:cefcdbd611fc49ed280d01",
+            measurementId: "G-X4F9GRZ8Z4"
+        };
 
         async function initFirebase() {
             try {
-                // 1. 获取配置 (优先使用注入配置)
-                let firebaseConfig;
+                // 优先使用环境注入配置，否则使用您提供的私有配置
+                let config;
                 if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-                    firebaseConfig = JSON.parse(__firebase_config);
+                    config = JSON.parse(__firebase_config);
                 } else {
-                    // 备用配置 (即您的私有配置)
-                    firebaseConfig = {
-                        apiKey: "AIzaSyCwbnaYt4w9ZgqBsFR7IfOOZNlkRQpyaO4",
-                        authDomain: "honti-a3783.firebaseapp.com",
-                        projectId: "honti-a3783",
-                        storageBucket: "honti-a3783.firebasestorage.app",
-                        messagingSenderId: "317723988500",
-                        appId: "1:317723988500:web:cefcdbd611fc49ed280d01"
-                    };
+                    config = myFirebaseConfig;
                 }
 
-                const app = initializeApp(firebaseConfig);
+                const app = initializeApp(config);
                 db = getFirestore(app);
                 auth = getAuth(app);
                 
-                // 2. 身份验证 (必须在查询之前)
+                // 身份验证 - 必须在任何 Firestore 操作之前
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
-                    // 注意：如果您的 Firebase 控制台未开启 Anonymous 方式，这里会报 configuration-not-found
+                    // 如果提示 auth/configuration-not-found，请在 Firebase 控制台开启 Anonymous 登录
                     await signInAnonymously(auth);
                 }
 
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
-                        updateStatus("云端连接已建立", false);
-                        // 3. 验证成功后开始监听数据 (使用严格路径规则)
+                        updateStatus("云端连接成功", false);
+                        // 根据规则定义集合路径
                         dataCollection = collection(db, 'artifacts', appId, 'public', 'data', 'customers');
-                        startRealtimeSync();
+                        startSync();
                     }
                 });
 
             } catch (err) {
-                console.error("Firebase Auth Error:", err);
-                updateStatus("连接失败: " + (err.code || "配置未启用"), true);
+                console.error("Firebase Init Error:", err);
+                updateStatus(`连接受阻: ${err.code}`, true);
             }
         }
 
@@ -173,29 +184,30 @@
             txt.textContent = text;
             if (isError) {
                 bar.classList.add('status-error');
-                dot.classList.remove('animate-ping');
+                dot.classList.remove('animate-pulse');
+                dot.classList.add('bg-white');
             } else {
                 bar.classList.remove('status-error');
-                setTimeout(() => bar.parentElement.style.opacity = '0', 3000);
+                dot.className = "w-2 h-2 bg-green-400 rounded-full";
+                setTimeout(() => bar.parentElement.style.opacity = '0', 4000);
             }
         }
 
-        function startRealtimeSync() {
-            // 设置实时监听
+        function startSync() {
             onSnapshot(dataCollection, (snapshot) => {
                 const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 window.renderApp(data);
             }, (err) => {
-                console.error("Firestore error:", err);
-                updateStatus("权限错误: 请确保数据库规则允许读写", true);
+                console.error("Firestore Listen Error:", err);
+                updateStatus("权限受限: 检查数据库规则", true);
             });
         }
 
-        // 定义操作接口
+        // 定义供 UI 调用的全局操作接口
         window.cloudOps = {
             async add(item) {
                 if(!auth.currentUser) return;
-                const id = `c_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+                const id = `c_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
                 await setDoc(doc(dataCollection, id), item);
             },
             async update(id, updates) {
@@ -212,10 +224,10 @@
     </script>
 
     <script>
-        // UI & 地图逻辑
+        // UI 逻辑与地图展示
         lucide.createIcons();
         let currentData = [];
-        const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([34.0, 108.0], 4);
+        const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([34.0, 108.0], 5);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
         const markersLayer = L.layerGroup().addTo(map);
 
@@ -237,36 +249,47 @@
             list.innerHTML = '';
 
             data.forEach(item => {
+                // 地图标记
                 const marker = L.circleMarker([item.lat, item.lng], {
-                    radius: Math.min(Math.max((item.demand || 10) / 10, 6), 25),
+                    radius: Math.min(Math.max((item.demand || 10) / 15, 6), 30),
                     fillColor: '#4f46e5',
                     color: '#fff',
-                    weight: 2,
+                    weight: 3,
                     fillOpacity: 0.8
                 }).addTo(markersLayer);
 
                 marker.bindPopup(`
-                    <div class="p-1 min-w-[140px]">
-                        <div class="font-bold text-slate-800 border-b pb-1 mb-1">${item.name}</div>
-                        <div class="text-[11px] text-indigo-600 font-bold">需求: ${item.demand || 0} 吨</div>
-                        <div class="text-[10px] text-slate-500 mt-1 truncate">供应商: ${item.supplier || '-'}</div>
-                        <button onclick="triggerEdit('${item.id}')" class="mt-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] py-1.5 rounded transition-colors shadow-sm">编辑详情</button>
+                    <div class="p-2 min-w-[160px]">
+                        <div class="font-black text-slate-800 border-b pb-2 mb-2 text-sm">${item.name}</div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-[10px] text-slate-400 font-bold uppercase">需求规模</span>
+                            <span class="text-xs font-black text-indigo-600">${item.demand || 0} T</span>
+                        </div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-[10px] text-slate-400 font-bold uppercase">供应商</span>
+                            <span class="text-xs text-slate-600 font-bold">${item.supplier || '-'}</span>
+                        </div>
+                        <button onclick="triggerEdit('${item.id}')" class="w-full bg-slate-900 text-white text-[10px] font-bold py-2 rounded-xl active:scale-95 transition-transform shadow-lg">编辑云端数据</button>
                     </div>
                 `);
 
+                // 侧边栏列表
                 const card = document.createElement('div');
-                card.className = "p-3 bg-white border border-slate-100 rounded-xl hover:border-indigo-400 hover:shadow-md cursor-pointer transition-all group";
+                card.className = "group p-4 bg-white border border-slate-100 rounded-2xl hover:border-indigo-500 hover:shadow-xl hover:shadow-indigo-50/50 cursor-pointer transition-all duration-300";
                 card.innerHTML = `
-                    <div class="flex justify-between items-start">
-                        <div class="text-xs font-bold text-slate-700 truncate w-3/4 group-hover:text-indigo-600">${item.name}</div>
-                        <span class="text-[9px] font-bold text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded">${item.demand || 0}T</span>
+                    <div class="flex justify-between items-start mb-1">
+                        <div class="text-[13px] font-black text-slate-800 truncate pr-2 group-hover:text-indigo-600 transition-colors">${item.name}</div>
+                        <div class="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg whitespace-nowrap">${item.demand || 0}T</div>
                     </div>
-                    <div class="text-[9px] text-slate-400 mt-1 italic truncate">${item.remark || '无备注信息'}</div>
+                    <div class="text-[10px] text-slate-400 font-medium line-clamp-1">${item.remark || '暂无备注说明'}</div>
                 `;
-                card.onclick = () => { map.flyTo([item.lat, item.lng], 12); marker.openPopup(); };
+                card.onclick = () => { 
+                    map.flyTo([item.lat, item.lng], 13); 
+                    setTimeout(() => marker.openPopup(), 400); 
+                };
                 list.appendChild(card);
             });
-            document.getElementById('customer-count-badge').textContent = `${data.length} 位客户`;
+            document.getElementById('customer-count-badge').textContent = `${data.length} 位活跃客户`;
         };
 
         // 数据导入逻辑
@@ -279,29 +302,29 @@
                 try {
                     const workbook = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
                     const raw = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-                    let successCount = 0;
+                    let count = 0;
                     for (let row of raw) {
                         const lat = parseFloat(row['纬度'] || row['lat']);
                         const lng = parseFloat(row['经度'] || row['lng']);
                         if (!isNaN(lat) && !isNaN(lng)) {
                             await window.cloudOps.add({
-                                name: row['客户名称'] || row['Name'] || '未知客户',
+                                name: row['客户名称'] || row['Name'] || '新客户',
                                 lat, lng,
                                 demand: parseFloat(row['需求量'] || 0),
-                                supplier: row['供应商'] || '未知',
+                                supplier: row['供应商'] || '待核实',
                                 remark: row['备注'] || '',
                                 lastUpdated: new Date().toISOString()
                             });
-                            successCount++;
+                            count++;
                         }
                     }
-                    showToast(`成功导入 ${successCount} 条数据`);
-                } catch (err) { showToast("导入失败: " + err.message, true); }
+                    showToast(`同步成功: 已将 ${count} 个客户存入云端`);
+                } catch (err) { showToast("解析失败，请检查文件格式", true); }
             };
             reader.readAsArrayBuffer(file);
         };
 
-        // 编辑逻辑
+        // 编辑功能
         window.triggerEdit = (id) => {
             const item = currentData.find(d => d.id === id);
             if (!item) return;
@@ -325,17 +348,17 @@
             try {
                 await window.cloudOps.update(id, updates);
                 closeEditModal();
-                showToast("同步成功");
+                showToast("云端更新完成");
             } catch (e) { showToast("同步失败", true); }
         }
 
         async function deleteCustomer() {
             const id = document.getElementById('edit-id').value;
-            if (confirm("确定要永久删除此记录吗？")) {
+            if (confirm("删除后数据将无法找回，确定删除？")) {
                 try {
                     await window.cloudOps.delete(id);
                     closeEditModal();
-                    showToast("已从云端移除");
+                    showToast("数据已从云端抹除");
                 } catch (e) { showToast("删除失败", true); }
             }
         }
@@ -343,12 +366,15 @@
         function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
         function showToast(msg, isError = false) {
             const toast = document.createElement('div');
-            toast.className = `fixed bottom-10 left-1/2 -translate-x-1/2 z-[9999] px-6 py-2 rounded-lg text-white text-xs font-bold shadow-2xl transition-all ${isError ? 'bg-red-500' : 'bg-slate-900'}`;
+            toast.className = `fixed bottom-10 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 rounded-2xl text-white text-[11px] font-black shadow-2xl transition-all duration-300 transform translate-y-2 opacity-0 ${isError ? 'bg-red-500' : 'bg-indigo-600'}`;
             toast.textContent = msg;
             document.body.appendChild(toast);
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
             setTimeout(() => {
-                toast.style.opacity = '0';
-                setTimeout(() => toast.remove(), 500);
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
             }, 3000);
         }
     </script>
