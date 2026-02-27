@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>钛白粉供应链管理系统 - 生产环境版</title>
+    <title>钛白粉供应链管理系统 - 私有云端版</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -19,10 +19,7 @@
         .sidebar-hidden { transform: translateX(-100%); }
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        
-        /* 修复 Leaflet 弹窗样式 */
         .leaflet-popup-content-wrapper { border-radius: 12px; padding: 5px; }
-        
         #status-bar { transition: all 0.5s ease; }
         .status-error { background-color: #ef4444 !important; }
     </style>
@@ -33,7 +30,7 @@
     <div class="fixed top-6 left-1/2 -translate-x-1/2 z-[5000]">
         <div id="status-bar" class="bg-slate-900/90 backdrop-blur text-white px-6 py-2 rounded-full shadow-2xl flex items-center gap-3">
             <div id="status-dot" class="w-2 h-2 bg-indigo-400 rounded-full animate-ping"></div>
-            <span id="status-text" class="text-xs font-bold tracking-wide">正在初始化云端连接...</span>
+            <span id="status-text" class="text-xs font-bold tracking-wide">正在同步云端数据...</span>
         </div>
     </div>
 
@@ -76,14 +73,13 @@
     </div>
 
     <div class="flex h-screen relative overflow-hidden">
-        <!-- 侧边栏 -->
         <aside id="sidebar" class="w-80 md:w-96 glass-panel border-r border-slate-200 flex flex-col z-[2000] shadow-xl sidebar-transition absolute h-full left-0 top-0">
             <div class="p-6 border-b border-slate-100 bg-white flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <div class="p-2 bg-indigo-600 rounded-lg text-white shadow-lg shadow-indigo-200"><i data-lucide="database" class="w-5 h-5"></i></div>
                     <div>
-                        <h1 class="text-sm font-bold text-slate-800">钛白粉云管理系统</h1>
-                        <p class="text-[10px] text-slate-400 font-medium">实时同步 · 供应链决策</p>
+                        <h1 class="text-sm font-bold text-slate-800">钛白粉云管理</h1>
+                        <p class="text-[10px] text-slate-400 font-medium">私有数据库版本</p>
                     </div>
                 </div>
                 <button id="close-sidebar" class="p-2 text-slate-400 hover:bg-slate-50 rounded-lg"><i data-lucide="chevron-left" class="w-5 h-5"></i></button>
@@ -92,11 +88,9 @@
             <div class="flex-1 overflow-hidden flex flex-col">
                 <div class="px-6 py-3 bg-slate-50/80 border-b flex justify-between items-center">
                     <h2 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">客户分布清单</h2>
-                    <span id="customer-count-badge" class="bg-indigo-100 text-indigo-600 text-[9px] px-2 py-0.5 rounded-full font-bold">加载中...</span>
+                    <span id="customer-count-badge" class="bg-indigo-100 text-indigo-600 text-[9px] px-2 py-0.5 rounded-full font-bold">同步中...</span>
                 </div>
-                <div id="customer-list" class="flex-1 overflow-y-auto custom-scroll p-4 space-y-2">
-                    <!-- 列表项将在这里动态生成 -->
-                </div>
+                <div id="customer-list" class="flex-1 overflow-y-auto custom-scroll p-4 space-y-2"></div>
             </div>
 
             <div class="p-6 border-t bg-slate-50/30">
@@ -106,41 +100,56 @@
                         <i data-lucide="upload-cloud" class="w-5 h-5"></i>
                     </div>
                     <p class="text-[11px] text-slate-600 font-bold">导入 Excel 数据</p>
-                    <p class="text-[9px] text-slate-400 mt-1">需包含: 客户名称, 经度, 纬度</p>
                 </div>
             </div>
         </aside>
 
-        <!-- 主地图区域 -->
         <main class="flex-1 relative h-full w-full">
-            <button id="open-sidebar" class="absolute top-6 left-6 z-[1500] bg-white p-3 rounded-xl shadow-xl hover:bg-slate-50 sidebar-transition border border-slate-100">
+            <button id="open-sidebar" class="absolute top-6 left-6 z-[1500] bg-white p-3 rounded-xl shadow-xl hover:bg-slate-50 border border-slate-100">
                 <i data-lucide="menu" class="w-6 h-6 text-indigo-600"></i>
             </button>
             <div id="map"></div>
         </main>
     </div>
 
-    <!-- Firebase 逻辑 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, doc, setDoc, onSnapshot, deleteDoc, updateDoc, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        let db, auth, dataCollection;
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'titanium-supply-chain-v1';
+        // 用户提供的私有配置
+        const userFirebaseConfig = {
+            apiKey: "AIzaSyCwbnaYt4w9ZgqBsFR7IfOOZNlkRQpyaO4",
+            authDomain: "honti-a3783.firebaseapp.com",
+            projectId: "honti-a3783",
+            storageBucket: "honti-a3783.firebasestorage.app",
+            messagingSenderId: "317723988500",
+            appId: "1:317723988500:web:cefcdbd611fc49ed280d01",
+            measurementId: "G-X4F9GRZ8Z4"
+        };
 
-        // 初始化 Firebase
+        let db, auth, dataCollection;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'honti-titanium-app';
+
         async function initFirebase() {
             try {
-                const firebaseConfig = JSON.parse(__firebase_config);
-                const app = initializeApp(firebaseConfig);
+                // 优先检查系统注入配置，如果没有则使用用户提供的配置
+                let finalConfig = userFirebaseConfig;
+                if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                    try {
+                        finalConfig = JSON.parse(__firebase_config);
+                        console.log("Using system injected Firebase config");
+                    } catch(e) { console.warn("System config parse failed, using provided config"); }
+                }
+
+                const app = initializeApp(finalConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
                 
-                // 核心规则：使用指定的路径
+                // 核心规则：必须使用特定的路径结构以匹配环境权限
                 dataCollection = collection(db, 'artifacts', appId, 'public', 'data', 'customers');
 
-                // 认证流程
+                // 身份验证逻辑 (RULE 3)
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
@@ -149,19 +158,16 @@
 
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
-                        updateStatus("已连接云端数据库", false);
+                        updateStatus("云端连接成功", false);
                         startRealtimeSync();
-                    } else {
-                        updateStatus("身份验证失败", true);
                     }
                 });
             } catch (err) {
                 console.error("Firebase Init Error:", err);
-                updateStatus("连接受阻: " + err.message, true);
+                updateStatus("连接受阻: " + (err.code || err.message), true);
             }
         }
 
-        // 状态更新 UI
         function updateStatus(text, isError) {
             const bar = document.getElementById('status-bar');
             const dot = document.getElementById('status-dot');
@@ -176,28 +182,28 @@
             }
         }
 
-        // 实时同步
         function startRealtimeSync() {
-            // 使用简单查询避免索引问题 (RULE 2)
+            // 实时监听 (RULE 2: 简单查询)
             onSnapshot(dataCollection, (snapshot) => {
                 const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 window.renderApp(data);
             }, (err) => {
-                console.error("Sync Error:", err);
-                updateStatus("同步错误: " + err.message, true);
+                updateStatus("权限受限: 请检查数据库规则", true);
             });
         }
 
-        // 导出操作接口供全局使用
         window.cloudOps = {
             async add(item) {
+                if(!auth.currentUser) return;
                 const id = `c_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
                 await setDoc(doc(dataCollection, id), item);
             },
             async update(id, updates) {
+                if(!auth.currentUser) return;
                 await updateDoc(doc(dataCollection, id), updates);
             },
             async delete(id) {
+                if(!auth.currentUser) return;
                 await deleteDoc(doc(dataCollection, id));
             }
         };
@@ -206,7 +212,7 @@
     </script>
 
     <script>
-        // UI 交互逻辑
+        // 地图与 UI 逻辑
         lucide.createIcons();
         let currentData = [];
         const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([34.0, 108.0], 4);
@@ -224,7 +230,6 @@
         closeBtn.onclick = () => toggleSidebar(false);
         openBtn.onclick = () => toggleSidebar(true);
 
-        // 渲染页面
         window.renderApp = (data) => {
             currentData = data;
             markersLayer.clearLayers();
@@ -232,10 +237,8 @@
             list.innerHTML = '';
 
             data.forEach(item => {
-                // 地图标记
-                const size = Math.min(Math.max((item.demand || 10) / 10, 6), 25);
                 const marker = L.circleMarker([item.lat, item.lng], {
-                    radius: size,
+                    radius: Math.min(Math.max((item.demand || 10) / 10, 6), 25),
                     fillColor: '#4f46e5',
                     color: '#fff',
                     weight: 2,
@@ -243,15 +246,13 @@
                 }).addTo(markersLayer);
 
                 marker.bindPopup(`
-                    <div class="p-1">
+                    <div class="p-1 min-w-[120px]">
                         <div class="font-bold text-slate-800">${item.name}</div>
                         <div class="text-[11px] text-indigo-600 font-bold mt-1">需求: ${item.demand || 0} 吨</div>
-                        <div class="text-[10px] text-slate-400 mt-1">${item.supplier || '未记录'}</div>
-                        <button onclick="triggerEdit('${item.id}')" class="mt-2 w-full bg-slate-900 text-white text-[10px] py-1 rounded">查看详情</button>
+                        <button onclick="triggerEdit('${item.id}')" class="mt-2 w-full bg-indigo-600 text-white text-[10px] py-1 rounded">管理详情</button>
                     </div>
                 `);
 
-                // 侧边栏列表
                 const card = document.createElement('div');
                 card.className = "p-3 bg-white border border-slate-100 rounded-xl hover:border-indigo-400 hover:shadow-md cursor-pointer transition-all";
                 card.innerHTML = `
@@ -259,67 +260,50 @@
                         <div class="text-xs font-bold text-slate-700 truncate w-3/4">${item.name}</div>
                         <span class="text-[9px] font-bold text-indigo-500">${item.demand || 0}T</span>
                     </div>
-                    <div class="text-[10px] text-slate-400 mt-1 flex items-center gap-1">
-                        <i data-lucide="truck" class="w-3 h-3"></i> ${item.supplier || '无供应商'}
-                    </div>
                 `;
-                card.onclick = () => {
-                    map.flyTo([item.lat, item.lng], 12);
-                    marker.openPopup();
-                };
+                card.onclick = () => { map.flyTo([item.lat, item.lng], 12); marker.openPopup(); };
                 list.appendChild(card);
             });
-            
-            document.getElementById('customer-count-badge').textContent = `${data.length} 节点`;
-            lucide.createIcons();
+            document.getElementById('customer-count-badge').textContent = `${data.length} 客户`;
         };
 
-        // 导入逻辑
         document.getElementById('drop-zone').onclick = () => document.getElementById('file-input').click();
         document.getElementById('file-input').onchange = (e) => {
             const file = e.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = async (ev) => {
                 try {
                     const workbook = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
                     const raw = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-                    
-                    let count = 0;
                     for (let row of raw) {
-                        const lat = parseFloat(row['纬度'] || row['lat'] || row['Latitude']);
-                        const lng = parseFloat(row['经度'] || row['lng'] || row['Longitude']);
-                        const name = row['客户名称'] || row['单位'] || row['Name'];
-                        
-                        if (!isNaN(lat) && !isNaN(lng) && name) {
+                        const lat = parseFloat(row['纬度'] || row['lat']);
+                        const lng = parseFloat(row['经度'] || row['lng']);
+                        if (!isNaN(lat) && !isNaN(lng)) {
                             await window.cloudOps.add({
-                                name, lat, lng,
-                                demand: parseFloat(row['需求量'] || row['需求'] || 0),
+                                name: row['客户名称'] || row['Name'] || '未知客户',
+                                lat, lng,
+                                demand: parseFloat(row['需求量'] || 0),
                                 supplier: row['供应商'] || '未知',
                                 remark: row['备注'] || '',
                                 lastUpdated: new Date().toISOString()
                             });
-                            count++;
                         }
                     }
-                    showToast(`成功导入 ${count} 条数据`);
-                } catch (err) {
-                    showToast("导入失败: " + err.message, true);
-                }
+                    showToast("导入成功");
+                } catch (err) { showToast("导入失败: " + err.message, true); }
             };
             reader.readAsArrayBuffer(file);
         };
 
-        // 编辑功能
         window.triggerEdit = (id) => {
             const item = currentData.find(d => d.id === id);
             if (!item) return;
             document.getElementById('edit-id').value = id;
-            document.getElementById('edit-name').value = item.name || '';
-            document.getElementById('edit-demand').value = item.demand || 0;
-            document.getElementById('edit-supplier').value = item.supplier || '';
-            document.getElementById('edit-remark').value = item.remark || '';
+            document.getElementById('edit-name').value = item.name;
+            document.getElementById('edit-demand').value = item.demand;
+            document.getElementById('edit-supplier').value = item.supplier;
+            document.getElementById('edit-remark').value = item.remark;
             document.getElementById('edit-modal').classList.remove('hidden');
         };
 
@@ -334,31 +318,25 @@
             };
             await window.cloudOps.update(id, updates);
             closeEditModal();
-            showToast("已保存并同步");
+            showToast("同步成功");
         }
 
         async function deleteCustomer() {
             const id = document.getElementById('edit-id').value;
-            if (confirm("确定要删除该客户记录吗？此操作无法撤销。")) {
+            if (confirm("删除记录？")) {
                 await window.cloudOps.delete(id);
                 closeEditModal();
-                showToast("记录已删除");
+                showToast("已删除");
             }
         }
 
         function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
-
         function showToast(msg, isError = false) {
             const toast = document.createElement('div');
-            toast.className = `fixed bottom-10 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 rounded-xl shadow-2xl text-white text-xs font-bold transition-all transform translate-y-20 ${isError ? 'bg-red-500' : 'bg-slate-900'}`;
+            toast.className = `fixed bottom-10 left-1/2 -translate-x-1/2 z-[9999] px-6 py-2 rounded-lg text-white text-xs ${isError ? 'bg-red-500' : 'bg-slate-900'}`;
             toast.textContent = msg;
             document.body.appendChild(toast);
-            setTimeout(() => toast.style.transform = 'translateY(0)', 10);
-            setTimeout(() => {
-                toast.style.transform = 'translateY(20px)';
-                toast.style.opacity = '0';
-                setTimeout(() => toast.remove(), 500);
-            }, 3000);
+            setTimeout(() => toast.remove(), 3000);
         }
     </script>
 </body>
