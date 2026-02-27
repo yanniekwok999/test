@@ -108,7 +108,7 @@
 
         async function init() {
             try {
-                const firebaseConfig = JSON.parse(__firebase_config);
+                const firebaseConfig = {apiKey: "AIzaSyCwbnaYt4w9ZgqBsFR7IfOOZNlkRQpyaO4", authDomain: "honti-a3783.firebaseapp.com", projectId: "honti-a3783", storageBucket: "honti-a3783.firebasestorage.app", messagingSenderId: "317723988500", appId: "1:317723988500:web:cefcdbd611fc49ed280d01", measurementId: "G-X4F9GRZ8Z4"};
                 const app = initializeApp(firebaseConfig);
                 const db = getFirestore(app);
                 const auth = getAuth(app);
