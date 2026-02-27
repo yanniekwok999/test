@@ -106,7 +106,7 @@
                         <i data-lucide="file-up" class="w-6 h-6 text-indigo-600"></i>
                     </div>
                     <p class="text-[11px] text-slate-700 font-black">导入 EXCEL 数据</p>
-                    <p class="text-[9px] text-slate-400 mt-1">支持实时云同步</p>
+                    <p class="text-[9px] text-slate-400 mt-1 text-center">需包含列名：客户名、经度、纬度<br>建议使用 .xlsx 格式</p>
                 </div>
             </div>
         </aside>
@@ -125,11 +125,9 @@
         import { getFirestore, collection, doc, setDoc, onSnapshot, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // 获取 appId
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'honti-titanium-supply-chain';
         let db, auth, dataCollection;
 
-        // 您的专属配置
         const myFirebaseConfig = {
             apiKey: "AIzaSyCwbnaYt4w9ZgqBsFR7IfOOZNlkRQpyaO4",
             authDomain: "honti-a3783.firebaseapp.com",
@@ -142,7 +140,6 @@
 
         async function initFirebase() {
             try {
-                // 优先使用环境注入配置，否则使用您提供的私有配置
                 let config;
                 if (typeof __firebase_config !== 'undefined' && __firebase_config) {
                     config = JSON.parse(__firebase_config);
@@ -154,18 +151,15 @@
                 db = getFirestore(app);
                 auth = getAuth(app);
                 
-                // 身份验证 - 必须在任何 Firestore 操作之前
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
-                    // 如果提示 auth/configuration-not-found，请在 Firebase 控制台开启 Anonymous 登录
                     await signInAnonymously(auth);
                 }
 
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
                         updateStatus("云端连接成功", false);
-                        // 根据规则定义集合路径
                         dataCollection = collection(db, 'artifacts', appId, 'public', 'data', 'customers');
                         startSync();
                     }
@@ -203,7 +197,6 @@
             });
         }
 
-        // 定义供 UI 调用的全局操作接口
         window.cloudOps = {
             async add(item) {
                 if(!auth.currentUser) return;
@@ -224,7 +217,6 @@
     </script>
 
     <script>
-        // UI 逻辑与地图展示
         lucide.createIcons();
         let currentData = [];
         const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([34.0, 108.0], 5);
@@ -249,7 +241,6 @@
             list.innerHTML = '';
 
             data.forEach(item => {
-                // 地图标记
                 const marker = L.circleMarker([item.lat, item.lng], {
                     radius: Math.min(Math.max((item.demand || 10) / 15, 6), 30),
                     fillColor: '#4f46e5',
@@ -273,7 +264,6 @@
                     </div>
                 `);
 
-                // 侧边栏列表
                 const card = document.createElement('div');
                 card.className = "group p-4 bg-white border border-slate-100 rounded-2xl hover:border-indigo-500 hover:shadow-xl hover:shadow-indigo-50/50 cursor-pointer transition-all duration-300";
                 card.innerHTML = `
@@ -292,7 +282,7 @@
             document.getElementById('customer-count-badge').textContent = `${data.length} 位活跃客户`;
         };
 
-        // 数据导入逻辑
+        // 数据导入逻辑 (优化后的模糊识别)
         document.getElementById('drop-zone').onclick = () => document.getElementById('file-input').click();
         document.getElementById('file-input').onchange = (e) => {
             const file = e.target.files[0];
@@ -301,30 +291,62 @@
             reader.onload = async (ev) => {
                 try {
                     const workbook = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
-                    const raw = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const raw = XLSX.utils.sheet_to_json(sheet);
+                    
+                    if (raw.length === 0) {
+                        showToast("文件内容为空", true);
+                        return;
+                    }
+
                     let count = 0;
+                    let skipCount = 0;
+
                     for (let row of raw) {
-                        const lat = parseFloat(row['纬度'] || row['lat']);
-                        const lng = parseFloat(row['经度'] || row['lng']);
+                        // 寻找最匹配的列名
+                        const findKey = (patterns) => {
+                            return Object.keys(row).find(k => patterns.some(p => k.toLowerCase().includes(p.toLowerCase())));
+                        };
+
+                        const latKey = findKey(['纬度', 'lat', 'y轴', 'latitude']);
+                        const lngKey = findKey(['经度', 'lng', 'x轴', 'longitude']);
+                        const nameKey = findKey(['名称', '公司', '客户', 'name', '单位']);
+                        const demandKey = findKey(['量', '吨', '需求', 'demand', 'quantity']);
+                        const supplierKey = findKey(['供', '厂家', '品牌', 'supplier', 'brand']);
+                        const remarkKey = findKey(['备注', '痛点', '说明', 'remark', 'note']);
+
+                        const lat = parseFloat(row[latKey]);
+                        const lng = parseFloat(row[lngKey]);
+
                         if (!isNaN(lat) && !isNaN(lng)) {
                             await window.cloudOps.add({
-                                name: row['客户名称'] || row['Name'] || '新客户',
-                                lat, lng,
-                                demand: parseFloat(row['需求量'] || 0),
-                                supplier: row['供应商'] || '待核实',
-                                remark: row['备注'] || '',
+                                name: row[nameKey] || '未命名客户',
+                                lat, 
+                                lng,
+                                demand: parseFloat(row[demandKey] || 0),
+                                supplier: row[supplierKey] || '待核实',
+                                remark: row[remarkKey] || '',
                                 lastUpdated: new Date().toISOString()
                             });
                             count++;
+                        } else {
+                            skipCount++;
                         }
                     }
-                    showToast(`同步成功: 已将 ${count} 个客户存入云端`);
-                } catch (err) { showToast("解析失败，请检查文件格式", true); }
+
+                    if (count > 0) {
+                        showToast(`导入成功: ${count}条数据已同步。${skipCount > 0 ? '跳过'+skipCount+'条无效行' : ''}`);
+                    } else {
+                        showToast("未识别到有效的经纬度数据，请检查表头", true);
+                    }
+                } catch (err) { 
+                    console.error(err);
+                    showToast("解析失败，请确保使用标准Excel表格", true); 
+                }
             };
             reader.readAsArrayBuffer(file);
         };
 
-        // 编辑功能
         window.triggerEdit = (id) => {
             const item = currentData.find(d => d.id === id);
             if (!item) return;
