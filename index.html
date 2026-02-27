@@ -171,7 +171,7 @@
 
         window.onload = () => {
             initIcons();
-            const saved = localStorage.getItem('global_titanium_data');
+            const saved = localStorage.getItem('global_titanium_data_v2'); // 更新存储版本
             if (saved) {
                 currentData = JSON.parse(saved);
                 renderData(currentData);
@@ -200,6 +200,11 @@
             reader.readAsArrayBuffer(file);
         };
 
+        function formatDate(date) {
+            const d = new Date(date);
+            return `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+        }
+
         function processAndSaveData(raw) {
             const find = (obj, keys) => {
                 const found = Object.keys(obj).find(k => keys.some(key => k.replace(/\s+/g,'').toLowerCase().includes(key.toLowerCase())));
@@ -216,7 +221,8 @@
                 supplier: find(item, ['供应商', 'Supplier']) || 'N/A',
                 pain: find(item, ['痛点', 'Pain', 'Issue']) || 'None',
                 process: find(item, ['工艺', 'Process']) || 'Standard',
-                remark: find(item, ['备注', 'Note', 'Remark']) || ''
+                remark: find(item, ['备注', 'Note', 'Remark']) || '',
+                lastModified: formatDate(new Date()) // 初始化修改时间
             })).filter(d => !isNaN(d.lat) && !isNaN(d.lng));
 
             currentData = processed;
@@ -227,7 +233,7 @@
         }
 
         function saveToLocal() {
-            localStorage.setItem('global_titanium_data', JSON.stringify(currentData));
+            localStorage.setItem('global_titanium_data_v2', JSON.stringify(currentData));
         }
 
         function renderData(data) {
@@ -285,9 +291,9 @@
                 <div class="font-sans">
                     <div class="bg-indigo-900 text-white p-3 flex justify-between items-center">
                         <h3 class="font-bold text-xs truncate mr-4">${item.name}</h3>
-                        <span class="text-[9px] bg-indigo-500 px-1.5 py-0.5 rounded">ID: ${item.id % 10000}</span>
+                        <span class="text-[9px] opacity-70">详情编辑</span>
                     </div>
-                    <div class="p-4 space-y-2 bg-white max-h-[400px] overflow-y-auto custom-scroll">
+                    <div class="p-4 space-y-2 bg-white max-h-[420px] overflow-y-auto custom-scroll">
                         <div class="info-grid">
                             <span class="info-label">需求量(吨)</span>
                             <input type="number" id="edit-demand" value="${item.demand}">
@@ -308,6 +314,10 @@
                             <span class="info-label">备注</span>
                             <textarea id="edit-remark">${item.remark}</textarea>
                         </div>
+                        <div class="info-grid mt-2 border-t pt-2">
+                            <span class="info-label">最后修改</span>
+                            <span class="text-[10px] text-slate-400 italic">${item.lastModified || '未记录'}</span>
+                        </div>
                         <div class="pt-3 flex gap-2">
                             <button id="save-btn" class="flex-1 bg-indigo-600 text-white py-2 rounded text-xs font-bold hover:bg-indigo-700">保存</button>
                             <button id="close-pop-btn" class="px-3 bg-slate-100 text-slate-500 py-2 rounded text-xs">取消</button>
@@ -326,6 +336,7 @@
                         item.supplier = document.getElementById('edit-supplier').value;
                         item.pain = document.getElementById('edit-pain').value;
                         item.remark = document.getElementById('edit-remark').value;
+                        item.lastModified = formatDate(new Date()); // 更新时间
                         
                         saveToLocal();
                         renderData(currentData);
@@ -354,7 +365,7 @@
 
         document.getElementById('clear-data').onclick = () => {
             if(confirm("确定要清空全球数据吗？")) {
-                localStorage.removeItem('global_titanium_data');
+                localStorage.removeItem('global_titanium_data_v2');
                 currentData = [];
                 renderEmpty();
                 markersLayer.clearLayers();
@@ -373,7 +384,8 @@
                 "现有供应商": item.supplier,
                 "业务痛点": item.pain,
                 "工艺类型": item.process,
-                "备注信息": item.remark
+                "备注信息": item.remark,
+                "最后修改时间": item.lastModified
             }));
             const ws = XLSX.utils.json_to_sheet(exportData);
             const wb = XLSX.utils.book_new();
