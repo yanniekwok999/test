@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>钛白粉全球供应链管理系统</title>
+    <title>钛白粉全球供应链管理系统 - 界面精简版</title>
     
     <!-- CDN 资源 -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -24,17 +24,35 @@
         .sidebar-hidden { transform: translateX(-100%); }
         
         .leaflet-popup-content-wrapper { border-radius: 12px; padding: 0; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
-        .leaflet-popup-content { margin: 0 !important; width: 320px !important; }
+        .leaflet-popup-content { margin: 0 !important; width: 340px !important; }
 
-        .info-grid { display: grid; grid-template-columns: 80px 1fr; gap: 8px; font-size: 12px; align-items: flex-start; margin-bottom: 6px; }
-        .info-label { color: #64748b; font-weight: 600; }
-        .info-value { color: #1e293b; word-break: break-all; }
+        .info-grid { display: grid; grid-template-columns: 100px 1fr; gap: 8px; font-size: 12px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid #f8fafc; }
+        .info-label { color: #64748b; font-weight: 600; line-height: 1.4; }
         
-        input, textarea { border: 1px solid #e2e8f0; border-radius: 4px; padding: 4px; width: 100%; font-size: 12px; }
-        textarea { min-height: 40px; resize: vertical; }
+        /* 隐藏输入框边框，使其看起来像纯文本，点击时才显示编辑感 */
+        .edit-field { 
+            border: 1px solid transparent; 
+            border-radius: 4px; 
+            padding: 4px; 
+            width: 100%; 
+            font-size: 12px; 
+            background: transparent;
+            transition: all 0.2s;
+            color: #1e293b;
+        }
+        .edit-field:focus {
+            border-color: #e2e8f0;
+            background: #f8fafc;
+            outline: none;
+        }
+        textarea.edit-field { min-height: 40px; resize: none; overflow-y: hidden; }
+
+        .search-container { position: relative; width: 100%; }
+        .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+        .search-input { padding-left: 32px !important; border-radius: 8px !important; border: 1px solid #e2e8f0 !important; }
 
         @media (max-width: 768px) {
-            aside { width: 85% !important; }
+            aside { width: 90% !important; }
         }
     </style>
 </head>
@@ -45,29 +63,35 @@
         <aside id="sidebar" class="w-96 glass-panel border-r border-slate-200 flex flex-col z-[2000] shadow-xl sidebar-transition absolute h-full left-0 top-0">
             <!-- 头部 -->
             <div class="p-5 border-b border-slate-100 bg-white">
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center gap-3">
                         <div class="p-2 bg-indigo-600 rounded-lg shadow-lg">
                             <i data-lucide="globe" class="text-white w-5 h-5"></i>
                         </div>
                         <div>
                             <h1 class="text-base font-bold text-slate-800">全球供应链看板</h1>
-                            <p class="text-[10px] text-slate-400 uppercase tracking-wider">Global Supply Chain</p>
+                            <p class="text-[10px] text-slate-400 uppercase tracking-wider">Precision Data View</p>
                         </div>
                     </div>
                     <button id="close-sidebar" class="p-2 hover:bg-slate-100 rounded-full text-slate-400">
                         <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
                 </div>
+
+                <!-- 搜索栏 -->
+                <div class="search-container">
+                    <i data-lucide="search" class="search-icon w-4 h-4"></i>
+                    <input type="text" id="search-box" class="search-input w-full outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" placeholder="查找客户名称...">
+                </div>
             </div>
 
             <!-- 操作区 -->
             <div class="px-5 py-3 flex gap-2 border-b border-slate-100 bg-slate-50/50">
                 <button id="export-current" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition-all">
-                    <i data-lucide="download" class="w-3.5 h-3.5"></i> 导出数据
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i> 导出数据报表
                 </button>
                 <button id="clear-data" class="bg-white border border-red-200 text-red-500 hover:bg-red-50 text-xs font-bold py-2 px-3 rounded-lg transition-all">
-                    清空
+                    清空数据
                 </button>
             </div>
 
@@ -75,14 +99,14 @@
             <div class="flex-1 overflow-hidden flex flex-col">
                 <div class="px-5 py-3 flex items-center justify-between border-b border-slate-100">
                     <div class="flex items-center gap-2">
-                        <i data-lucide="list" class="w-4 h-4 text-slate-400"></i>
-                        <h2 class="text-xs font-bold text-slate-500 uppercase">全球企业列表</h2>
+                        <i data-lucide="trending-up" class="w-4 h-4 text-indigo-500"></i>
+                        <h2 class="text-xs font-bold text-slate-500 uppercase">需求量排行</h2>
                     </div>
                     <span id="customer-count" class="bg-slate-200 text-slate-600 text-[10px] px-2 py-0.5 rounded-full font-bold">0</span>
                 </div>
                 
                 <div id="customer-list" class="flex-1 overflow-y-auto custom-scroll p-4 space-y-3">
-                    <!-- 动态加载 -->
+                    <!-- 列表项 -->
                 </div>
             </div>
 
@@ -91,12 +115,8 @@
                 <div id="drop-zone" class="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center hover:border-indigo-400 hover:bg-indigo-50/30 transition-all cursor-pointer group relative">
                     <input type="file" id="file-input" class="hidden" accept=".xlsx, .xls, .csv">
                     <i data-lucide="upload-cloud" class="mx-auto w-6 h-6 text-slate-300 group-hover:text-indigo-500 mb-2 transition-colors"></i>
-                    <p class="text-xs text-slate-600 font-bold">点击上传全球客户 Excel</p>
-                    <p class="text-[9px] text-slate-400 mt-1">支持全球经纬度坐标</p>
+                    <p class="text-xs text-slate-600 font-bold">点击上传 Excel 开启看板</p>
                 </div>
-                <button id="export-template" class="w-full mt-3 text-[10px] text-slate-400 hover:text-indigo-500 flex items-center justify-center gap-1">
-                    <i data-lucide="file-text" class="w-3 h-3"></i> 下载全球版导入模板
-                </button>
             </div>
         </aside>
 
@@ -130,17 +150,16 @@
         const countBadge = document.getElementById('customer-count');
         const statusBar = document.getElementById('status-bar');
         const statusText = document.getElementById('status-text');
+        const searchBox = document.getElementById('search-box');
 
         let currentData = [];
 
-        // 修改点：切换到全球通用的 OpenStreetMap (OSM)
         const map = L.map('map', { 
             zoomControl: false,
             attributionControl: false,
-            worldCopyJump: true // 解决跨日期变更线的显示问题
-        }).setView([20, 0], 2); // 初始视角设为全球范围
+            worldCopyJump: true 
+        }).setView([20, 0], 2);
 
-        // 使用 OSM 瓦片，支持全球无死角显示
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             minZoom: 2
@@ -161,28 +180,35 @@
         openBtn.onclick = () => toggleSidebar(true);
 
         window.onload = () => {
-            const saved = localStorage.getItem('global_titanium_data');
+            const saved = localStorage.getItem('global_dynamic_titanium_data');
             if (saved) {
                 currentData = JSON.parse(saved);
                 renderData(currentData);
             } else {
                 renderEmpty();
-                // 如果没有数据，默认展开侧边栏引导上传
                 toggleSidebar(true);
             }
+        };
+
+        searchBox.oninput = (e) => {
+            const term = e.target.value.toLowerCase().trim();
+            const filtered = currentData.filter(item => 
+                item._mainTitle.toLowerCase().includes(term)
+            );
+            renderData(filtered, false);
         };
 
         dropZone.onclick = () => fileInput.click();
         fileInput.onchange = (e) => {
             const file = e.target.files[0];
             if (!file) return;
-            showStatus("正在解析全球数据...");
+            showStatus("解析数据并进行深度排名...");
             const reader = new FileReader();
             reader.onload = (ev) => {
                 try {
                     const workbook = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
                     const rawData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-                    processAndSaveData(rawData);
+                    processFullData(rawData);
                 } catch (err) {
                     showStatus("解析失败，请检查文件格式");
                     setTimeout(hideStatus, 3000);
@@ -191,24 +217,50 @@
             reader.readAsArrayBuffer(file);
         };
 
-        function processAndSaveData(raw) {
-            const find = (obj, keys) => {
-                const found = Object.keys(obj).find(k => keys.some(key => k.replace(/\s+/g,'').toLowerCase().includes(key.toLowerCase())));
-                return found ? obj[found] : '';
-            };
+        function processFullData(raw) {
+            if (raw.length === 0) return;
 
-            const processed = raw.map((item, idx) => ({
-                id: Date.now() + idx,
-                name: find(item, ['客户', '企业', '单位', 'Name', 'Company']) || 'Unknown Company',
-                lat: parseFloat(find(item, ['纬度', 'Lat'])),
-                lng: parseFloat(find(item, ['经度', 'Lng', 'Long'])),
-                demand: parseFloat(find(item, ['需求', '量', 'Demand', 'Tons'])) || 0,
-                capacity: find(item, ['产能', 'Capacity']) || 'N/A',
-                supplier: find(item, ['供应商', 'Supplier']) || 'N/A',
-                pain: find(item, ['痛点', 'Pain', 'Issue']) || 'None',
-                process: find(item, ['工艺', 'Process']) || 'Standard',
-                remark: find(item, ['备注', 'Note', 'Remark']) || ''
-            })).filter(d => !isNaN(d.lat) && !isNaN(d.lng));
+            let demandKey = null;
+            if (raw.length > 0) {
+                const keys = Object.keys(raw[0]);
+                demandKey = keys.find(k => k.includes('需求') || k.toLowerCase().includes('demand') || k.includes('量'));
+            }
+
+            const processed = raw.map((item, idx) => {
+                const entry = {
+                    _id: Date.now() + idx,
+                    _lat: 0,
+                    _lng: 0,
+                    _mainTitle: '',
+                    _demandValue: 0,
+                    _rawFields: {} 
+                };
+
+                Object.entries(item).forEach(([key, value]) => {
+                    const cleanKey = key.trim();
+                    const lowerKey = cleanKey.toLowerCase();
+                    
+                    if (lowerKey === '纬度' || lowerKey === 'lat' || lowerKey === 'latitude') {
+                        entry._lat = parseFloat(value);
+                    } else if (lowerKey === '经度' || lowerKey === 'lng' || lowerKey === 'long' || lowerKey === 'longitude') {
+                        entry._lng = parseFloat(value);
+                    } else {
+                        entry._rawFields[cleanKey] = value === undefined || value === null ? "" : String(value);
+                        if (cleanKey === demandKey) {
+                            const val = parseFloat(String(value).replace(/[^0-9.]/g, ''));
+                            entry._demandValue = isNaN(val) ? 0 : val;
+                        }
+                    }
+                });
+
+                const nameKey = Object.keys(entry._rawFields).find(k => k.includes('名') || k.toLowerCase().includes('name'));
+                const firstKey = Object.keys(entry._rawFields)[0];
+                entry._mainTitle = entry._rawFields[nameKey || firstKey] || '未知实体';
+
+                return entry;
+            }).filter(d => !isNaN(d._lat) && !isNaN(d._lng));
+
+            processed.sort((a, b) => b._demandValue - a._demandValue);
 
             currentData = processed;
             saveToLocal();
@@ -218,110 +270,120 @@
         }
 
         function saveToLocal() {
-            localStorage.setItem('global_titanium_data', JSON.stringify(currentData));
+            localStorage.setItem('global_dynamic_titanium_data', JSON.stringify(currentData));
         }
 
-        function renderData(data) {
+        function renderData(data, shouldFitBounds = true) {
             markersLayer.clearLayers();
             customerList.innerHTML = '';
             
-            data.sort((a, b) => b.demand - a.demand);
-            
             const bounds = [];
-            data.forEach((c, index) => {
-                const color = c.demand > 1000 ? '#ef4444' : (c.demand > 200 ? '#4f46e5' : '#10b981');
-                const radius = Math.max(6, Math.min(20, Math.sqrt(c.demand) * 0.6));
-
-                const marker = L.circleMarker([c.lat, c.lng], {
-                    radius: radius,
-                    fillColor: color,
+            data.forEach((item, index) => {
+                const marker = L.circleMarker([item._lat, item._lng], {
+                    radius: 6 + (Math.log10(item._demandValue + 1) * 2.5),
+                    fillColor: index < 3 ? '#f59e0b' : '#4f46e5',
                     color: '#fff',
-                    weight: 2,
-                    fillOpacity: 0.85
+                    weight: 1.5,
+                    fillOpacity: 0.8
                 }).addTo(markersLayer);
 
-                marker.on('click', () => openEditPopup(c, marker));
+                marker.on('click', () => openDynamicPopup(item, marker));
 
                 const card = document.createElement('div');
-                card.className = "p-3 bg-white border border-slate-100 rounded-xl hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer flex gap-3 items-center group";
+                card.className = "p-3 bg-white border border-slate-100 rounded-xl hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer flex flex-col gap-1 group relative overflow-hidden";
+                
+                const demandKey = Object.keys(item._rawFields).find(k => k.includes('需求') || k.toLowerCase().includes('demand') || k.includes('量'));
+                const demandDisplay = demandKey ? item._rawFields[demandKey] : '0';
+
                 card.innerHTML = `
-                    <div class="w-8 h-8 flex-shrink-0 rounded-lg bg-slate-50 text-slate-400 flex items-center justify-center text-[10px] font-bold group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                        ${index + 1}
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <h4 class="font-bold text-slate-800 text-xs truncate">${c.name}</h4>
-                        <p class="text-[10px] text-slate-400 truncate mt-0.5">${c.supplier || '未记录供应商'}</p>
-                    </div>
-                    <div class="text-right">
-                        <div class="text-[11px] font-black text-indigo-600">${c.demand}T</div>
+                    <div class="flex items-center gap-3 relative z-10">
+                        <div class="w-8 h-8 flex-shrink-0 rounded-lg ${index < 3 ? 'bg-amber-100 text-amber-600' : 'bg-slate-50 text-slate-400'} flex items-center justify-center text-[11px] font-black group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                            ${index + 1}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="font-bold text-slate-800 text-xs truncate">${item._mainTitle}</h4>
+                            <div class="flex items-center gap-2 mt-0.5">
+                                <span class="text-[10px] text-slate-400 font-medium">需求: ${demandDisplay}</span>
+                            </div>
+                        </div>
                     </div>
                 `;
+                
                 card.onclick = () => {
                     if(window.innerWidth < 768) toggleSidebar(false);
-                    map.flyTo([c.lat, c.lng], 10);
-                    setTimeout(() => openEditPopup(c, marker), 400);
+                    map.flyTo([item._lat, item._lng], 10);
+                    setTimeout(() => openDynamicPopup(item, marker), 400);
                 };
                 customerList.appendChild(card);
-                bounds.push([c.lat, c.lng]);
+                bounds.push([item._lat, item._lng]);
             });
 
+            lucide.createIcons();
             countBadge.textContent = data.length;
-            if (bounds.length) {
+            if (shouldFitBounds && bounds.length) {
                 map.fitBounds(bounds, { padding: [50, 50], maxZoom: 10 });
             }
         }
 
-        function openEditPopup(item, marker) {
-            // 已移除右上角的 ID span
+        function openDynamicPopup(item, marker) {
+            let fieldsHtml = '';
+            Object.entries(item._rawFields).forEach(([key, val]) => {
+                fieldsHtml += `
+                    <div class="info-grid">
+                        <span class="info-label">${key}</span>
+                        <textarea class="edit-field" data-key="${key}" rows="1" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'">${val}</textarea>
+                    </div>
+                `;
+            });
+
             const content = `
                 <div class="font-sans">
-                    <div class="bg-indigo-900 text-white p-3 flex justify-between items-center">
-                        <h3 class="font-bold text-xs truncate mr-4">${item.name}</h3>
+                    <div class="bg-slate-900 text-white p-3 flex justify-between items-center">
+                        <h3 class="font-bold text-xs truncate mr-4">${item._mainTitle}</h3>
                     </div>
-                    <div class="p-4 space-y-2 bg-white max-h-[400px] overflow-y-auto custom-scroll">
-                        <div class="info-grid">
-                            <span class="info-label">需求量(吨)</span>
-                            <input type="number" id="edit-demand" value="${item.demand}">
+                    <div class="p-4 space-y-1 bg-white max-h-[400px] overflow-y-auto custom-scroll">
+                        <div class="text-[9px] text-slate-400 font-bold mb-2 uppercase tracking-widest flex items-center gap-1">
+                            <i data-lucide="info" class="w-3 h-3"></i> 客户数据档案
                         </div>
-                        <div class="info-grid">
-                            <span class="info-label">当前产能</span>
-                            <input type="text" id="edit-capacity" value="${item.capacity}">
-                        </div>
-                        <div class="info-grid">
-                            <span class="info-label">供应商</span>
-                            <input type="text" id="edit-supplier" value="${item.supplier}">
-                        </div>
-                        <div class="info-grid">
-                            <span class="info-label">业务痛点</span>
-                            <textarea id="edit-pain">${item.pain}</textarea>
-                        </div>
-                        <div class="info-grid">
-                            <span class="info-label">备注</span>
-                            <textarea id="edit-remark">${item.remark}</textarea>
-                        </div>
-                        <div class="pt-3 flex gap-2">
-                            <button id="save-btn" class="flex-1 bg-indigo-600 text-white py-2 rounded text-xs font-bold hover:bg-indigo-700">保存</button>
-                            <button id="close-pop-btn" class="px-3 bg-slate-100 text-slate-500 py-2 rounded text-xs">取消</button>
+                        ${fieldsHtml}
+                        <div class="pt-4 flex gap-2">
+                            <button id="save-btn" class="flex-1 bg-indigo-600 text-white py-2 rounded text-xs font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200">更新并同步</button>
+                            <button id="close-pop-btn" class="px-3 bg-slate-100 text-slate-500 py-2 rounded text-xs">隐藏</button>
                         </div>
                     </div>
                 </div>
             `;
-            marker.bindPopup(content, { maxWidth: 320, closeButton: false }).openPopup();
+            marker.bindPopup(content, { maxWidth: 340, closeButton: false }).openPopup();
 
             setTimeout(() => {
+                lucide.createIcons();
+                // 自动调整弹窗内所有textarea高度
+                document.querySelectorAll('.edit-field').forEach(ta => {
+                    ta.style.height = ta.scrollHeight + 'px';
+                });
+
                 const saveBtn = document.getElementById('save-btn');
                 if (saveBtn) {
                     saveBtn.onclick = () => {
-                        item.demand = parseFloat(document.getElementById('edit-demand').value) || 0;
-                        item.capacity = document.getElementById('edit-capacity').value;
-                        item.supplier = document.getElementById('edit-supplier').value;
-                        item.pain = document.getElementById('edit-pain').value;
-                        item.remark = document.getElementById('edit-remark').value;
+                        const textareas = document.querySelectorAll('.edit-field');
+                        textareas.forEach(ta => {
+                            const k = ta.getAttribute('data-key');
+                            item._rawFields[k] = ta.value;
+                            if (k.includes('需求') || k.toLowerCase().includes('demand') || k.includes('量')) {
+                                const val = parseFloat(ta.value.replace(/[^0-9.]/g, ''));
+                                item._demandValue = isNaN(val) ? 0 : val;
+                            }
+                        });
                         
+                        const nameKey = Object.keys(item._rawFields).find(k => k.includes('名') || k.toLowerCase().includes('name'));
+                        const firstKey = Object.keys(item._rawFields)[0];
+                        item._mainTitle = item._rawFields[nameKey || firstKey] || '未知实体';
+
+                        currentData.sort((a, b) => b._demandValue - a._demandValue);
                         saveToLocal();
-                        renderData(currentData);
+                        renderData(currentData, false);
                         map.closePopup();
-                        showStatus("全球同步成功");
+                        showStatus("数据同步成功");
                         setTimeout(hideStatus, 2000);
                     };
                 }
@@ -333,8 +395,8 @@
         function renderEmpty() {
             customerList.innerHTML = `
                 <div class="flex flex-col items-center justify-center py-20 text-slate-300">
-                    <i data-lucide="globe" class="w-10 h-10 mb-2 opacity-20"></i>
-                    <p class="text-[10px]">等待上传全球数据</p>
+                    <i data-lucide="file-spreadsheet" class="w-10 h-10 mb-2 opacity-20"></i>
+                    <p class="text-[10px]">请上传 Excel 数据文件</p>
                 </div>
             `;
             lucide.createIcons();
@@ -344,9 +406,10 @@
         function hideStatus() { statusBar.classList.add('hidden'); }
 
         document.getElementById('clear-data').onclick = () => {
-            if(confirm("确定要清空全球数据吗？")) {
-                localStorage.removeItem('global_titanium_data');
+            if(confirm("确定要清空所有数据记录吗？")) {
+                localStorage.removeItem('global_dynamic_titanium_data');
                 currentData = [];
+                searchBox.value = '';
                 renderEmpty();
                 markersLayer.clearLayers();
                 countBadge.textContent = "0";
@@ -356,31 +419,14 @@
         document.getElementById('export-current').onclick = () => {
             if (currentData.length === 0) return;
             const exportData = currentData.map(item => ({
-                "Customer Name": item.name,
-                "Latitude": item.lat,
-                "Longitude": item.lng,
-                "Annual Demand(T)": item.demand,
-                "Capacity": item.capacity,
-                "Supplier": item.supplier,
-                "Pain Points": item.pain,
-                "Process": item.process,
-                "Remarks": item.remark
+                "Latitude": item._lat,
+                "Longitude": item._lng,
+                ...item._rawFields
             }));
             const ws = XLSX.utils.json_to_sheet(exportData);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "GlobalSupplyChain");
-            XLSX.writeFile(wb, `Global_Supply_Chain_${new Date().toISOString().split('T')[0]}.xlsx`);
-        };
-
-        document.getElementById('export-template').onclick = () => {
-            const template = [
-                { "Name": "USA Client Example", "Lat": 34.05, "Lng": -118.24, "Demand": 2000, "Capacity": "500kt", "Supplier": "Vendor A", "Pain": "Shipping delay" },
-                { "Name": "China Client Example", "Lat": 31.23, "Lng": 121.47, "Demand": 1500, "Capacity": "300kt", "Supplier": "Vendor B", "Pain": "Price sensitive" }
-            ];
-            const ws = XLSX.utils.json_to_sheet(template);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Template");
-            XLSX.writeFile(wb, "Global_Import_Template.xlsx");
+            XLSX.utils.book_append_sheet(wb, ws, "Global_Supply_Chain");
+            XLSX.writeFile(wb, `Titanium_Data_${new Date().toISOString().split('T')[0]}.xlsx`);
         };
     </script>
 </body>
